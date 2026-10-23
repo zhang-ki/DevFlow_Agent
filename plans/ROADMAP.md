@@ -205,3 +205,9 @@ M4 在上述合成控制流范围内为 `VERIFIED`。独立复核补强了报告
 ## 阶段出口条件
 
 每阶段的交付物、测试日志、固定源/仓库 hash 和风险记录都进入本地版本历史。只有验收命令全绿、离线单测不依赖供应商、现场演示没有伪造输出、失败路径被记录，才标记阶段完成。M0 通过后再进入 M1；M1-M3 通过后，首个 DevFlow MVP 才成立。
+
+### M2 quality-gate follow-up — 2026-10-24
+
+The diagnostic verifier now requires a trusted pytest observation to align with the test assertion and narrowly static source behavior before classifying an assertion mismatch as verified. Zero extracted numeric claims remain non-passing; source/test expectations are not runtime observations. The saved r6 real answer was re-evaluated offline without changing its original evidence: citations pass, but diagnostic quality remains `UNVERIFIABLE` because the model answer omitted a structured observed result and did not read the pytest log. A new runner fixture exposes the log as supported `failure.txt` and requests that result explicitly.
+
+The original inline model-profile probe discarded its useful failure detail, so the prior transient exception cannot be reconstructed. It has been replaced by a dedicated fail-closed preflight that persists only allow-listed diagnostics; deterministic success, missing-config, parse-failure, and unexpected-error cases pass, and the current read-only local profile probe passes. The single bounded follow-up `20261024T013100Z-m2-qwen35-4b-r8-preflight-fix` then stopped before server startup because its synthetic pytest matcher required `AssertionError: assert 4 == 3` while the real Windows pytest output contained `E       assert 4 == 3`. No health request, inference, or tool call ran, and cleanup found no owned residual process or listener. The matcher now verifies exit code, exact node ID, assertion observation and failure summary against a bounded run-local log; the preserved Windows log passes the offline check. **M2 remains PARTIAL / NOT_VERIFIED** because no further real-model run was performed. The project is otherwise ready for an accurately labeled archive snapshot.

@@ -235,7 +235,7 @@ This checkout also contains a bounded, read-only software-engineering prototype 
 | Repository indexing, keyword/symbol search, trusted reads | **VERIFIED** in deterministic synthetic-repository tests |
 | OpenManus ToolCollection with exactly two read-only tools | **VERIFIED** in offline integration tests |
 | M1.5 answer-quality checks (bounded arithmetic and citations) | **VERIFIED** deterministically; preserved real run remains historical exit code 3, with a separate offline re-evaluation |
-| CI failure diagnosis from captured pytest logs | **PARTIAL**: deterministic five-case slice and CLI demo pass; real Qwen obtained source evidence but its bounded final response was truncated |
+| CI failure diagnosis from captured pytest logs | **PARTIAL / NOT_VERIFIED**: deterministic evidence and quality gates pass; the latest bounded real attempt passed model-config preflight but stopped at an overly strict synthetic pytest-log matcher before model startup |
 | Diff-only proposal, SQLite-backed independent approval, one-time receipt, isolated synthetic apply/test | **VERIFIED** for the bounded control flow; not registered as a production write tool |
 | M5 evidence-bound, one-replan control flow | **VERIFIED** deterministically on a synthetic repository; every attempt retains M4 approval and isolation |
 | Model-generated file edits, real user-repository writes, OS-level sandboxing | **NOT_VERIFIED / NOT_RUN** |
@@ -330,3 +330,32 @@ the deterministic synthetic repair demonstration with an independent synthetic
 reviewer and an isolated copy. It does not claim model-generated repair or an
 OS-level sandbox. See [`docs/INTERVIEW_OUTLINE.md`](docs/INTERVIEW_OUTLINE.md)
 for the short interview explanation and exact evidence boundary.
+
+#### M2 status update — 2026-10-24
+
+The saved Qwen answer still fails the diagnostic quality gate: its source and test citations are valid, but it did not include a structured observed pytest result, so M2 remains **PARTIAL / NOT_VERIFIED**. The offline verifier and regressions now fail closed on that missing observation. The only fresh attempt stopped at model-config preflight before starting the server; no new inference occurred. See the updated [M2 report](reports/public/M2_CI_DIAGNOSTICS_2026-10-23.md). A separately authorized run is still required after the runner records safe preflight diagnostics.
+
+The final preflight hardening replaced the inline PowerShell/Python probe with a
+dedicated helper that records an allow-listed stage, exception type, stable
+error code, and sanitized diagnostic. Missing, malformed, successful, and
+unexpected-error configurations are covered deterministically. The read-only
+probe then passed for the existing loopback profile. One bounded follow-up run
+(`20261024T013100Z-m2-qwen35-4b-r8-preflight-fix`) passed that preflight but
+stopped before server startup because the synthetic pytest guard expected
+`AssertionError: assert 4 == 3`, while the captured Windows pytest output used
+`E       assert 4 == 3`. No health request, model inference, or tool call ran;
+cleanup found no owned residual process or listener. M2 therefore remains
+**PARTIAL / NOT_VERIFIED**. The matcher was subsequently fixed offline: it now
+requires the expected exit code, exact test node ID, observed assertion line,
+and pytest failure summary, rejects logs outside the run directory, and accepts
+the preserved Windows pytest log. No additional model run was performed.
+
+### M1–M5 archive status
+
+| Milestone | Archive status | Evidence boundary |
+|---|---|---|
+| M1 | **VERIFIED** for deterministic repository indexing, trusted reads, the two-tool collection, and bounded offline Agent Loop; real local-model read-only traces are preserved separately | No write tool or general autonomous coding claim |
+| M2 | **PARTIAL / NOT_VERIFIED** | Deterministic diagnosis and quality gates pass; the final fresh run stopped before model startup at the synthetic pytest-log matcher |
+| M3 | **VERIFIED** for the deterministic synthetic control flow | Fixed/synthetic candidate and reviewer; no real-user-repository write or model-generated patch claim |
+| M4 | **VERIFIED** for deterministic evidence workflow and read-only replay | Synthetic repository and reviewer; no OS-level sandbox claim |
+| M5 | **VERIFIED** for deterministic bounded replanning over M4 | Synthetic candidates; real-model replanning and crash resume remain NOT_VERIFIED |

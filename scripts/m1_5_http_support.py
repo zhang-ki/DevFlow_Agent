@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -150,6 +152,128 @@ def check_version(run_dir, runtime=RUNTIME):
     return record
 
 
+def check_model_profile(project_root):
+    """Load the model profile and return only safe, allow-listed diagnostics."""
+
+    record = {
+        "stage": "model_config_preflight",
+        "status": "FAIL",
+        "failure_stage": "import_profile_loader",
+    }
+    readonly_error_type = None
+    try:
+        root = Path(project_root).resolve(strict=True)
+        root_text = str(root)
+        if root_text not in sys.path:
+            sys.path.insert(0, root_text)
+
+        from devflow_agent.real_readonly_agent import (
+            ReadonlyAgentError,
+            load_local_model_profile,
+        )
+
+        readonly_error_type = ReadonlyAgentError
+        record["failure_stage"] = "load_profile"
+        profile = load_local_model_profile(root)
+        record.update(
+            {
+                "status": "PASS",
+                "failure_stage": None,
+                "model": profile.model,
+                "endpoint": profile.endpoint_sanitized,
+                "api_type": profile.api_type,
+                "effective_config_max_tokens": profile.max_tokens,
+            }
+        )
+    except Exception as exc:
+        # ReadonlyAgentError messages are intentionally stable and sanitized.
+        # Unexpected exception messages/tracebacks may contain config values or
+        # local paths, so expose only their type and a fixed diagnostic string.
+        record["exception_type"] = type(exc).__name__
+        if readonly_error_type is not None and isinstance(exc, readonly_error_type):
+            record["error_code"] = exc.code
+            record["diagnostic"] = exc.message
+        else:
+            record["error_code"] = "unexpected_preflight_error"
+            record[
+                "diagnostic"
+            ] = "Unexpected error while validating the local model configuration"
+    return record
+
+
+def check_pytest_baseline(
+    run_dir,
+    log_file,
+    pytest_exit_code,
+    expected_nodeid,
+    expected_actual,
+    expected_value,
+):
+    """Verify the fixed synthetic pytest failure without executing any code."""
+
+    record = {
+        "stage": "synthetic_pytest_baseline_check",
+        "status": "FAIL",
+        "error_code": None,
+        "exit_code_match": pytest_exit_code == 1,
+        "nodeid_match": False,
+        "assertion_match": False,
+        "failure_summary_match": False,
+    }
+    try:
+        root = Path(run_dir).resolve(strict=True)
+        evidence_path = Path(log_file).resolve(strict=True)
+        if not evidence_path.is_relative_to(root):
+            record["error_code"] = "baseline_log_outside_run"
+            return record
+        if (
+            not re.fullmatch(r"[A-Za-z0-9_.\\/:-]+", expected_nodeid)
+            or "::" not in expected_nodeid
+            or ".." in expected_nodeid.replace("\\", "/").split("/")
+        ):
+            record["error_code"] = "invalid_expected_test_nodeid"
+            return record
+        raw = evidence_path.read_bytes()
+        if len(raw) > 1024 * 1024:
+            record["error_code"] = "baseline_log_too_large"
+            return record
+        text = raw.decode("utf-8")
+        normalized = text.replace("\\", "/")
+        normalized_nodeid = expected_nodeid.replace("\\", "/")
+        record["log_sha256"] = hashlib.sha256(raw).hexdigest()
+        record["nodeid_match"] = bool(
+            re.search(
+                rf"(?m)^FAILED\s+{re.escape(normalized_nodeid)}(?:\s+-.*)?$",
+                normalized,
+            )
+        )
+        record["assertion_match"] = bool(
+            re.search(
+                rf"(?m)^\s*E\s+assert\s+{expected_actual}\s*==\s*{expected_value}\s*$",
+                normalized,
+            )
+        )
+        record["failure_summary_match"] = bool(
+            re.search(r"(?m)^\s*1 failed(?:[\s,]|$)", normalized)
+        )
+        if all(
+            (
+                record["exit_code_match"],
+                record["nodeid_match"],
+                record["assertion_match"],
+                record["failure_summary_match"],
+            )
+        ):
+            record["status"] = "PASS"
+        else:
+            record["error_code"] = "baseline_evidence_mismatch"
+    except FileNotFoundError:
+        record["error_code"] = "baseline_log_missing"
+    except (OSError, UnicodeError):
+        record["error_code"] = "baseline_log_unreadable"
+    return record
+
+
 def check_health(run_dir, *, opener=None, budget_seconds=75, poll_seconds=1):
     opener = opener or local_opener()
     started = time.monotonic()
@@ -258,13 +382,55 @@ def ask_worker(run_dir, cli_args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["version", "health", "ask"])
+    parser.add_argument(
+        "mode", choices=["version", "profile", "pytest-baseline", "health", "ask"]
+    )
     parser.add_argument("--run-dir", type=Path, required=True)
+    parser.add_argument("--project-root", type=Path)
+    parser.add_argument("--log-file", type=Path)
+    parser.add_argument("--pytest-exit-code", type=int)
+    parser.add_argument("--expected-nodeid")
+    parser.add_argument("--expected-actual", type=int)
+    parser.add_argument("--expected-value", type=int)
     args, remainder = parser.parse_known_args()
     if args.mode == "ask":
         return ask_worker(args.run_dir, remainder)
     if remainder:
         parser.error("unexpected arguments")
+    if args.mode == "profile":
+        if args.project_root is None:
+            parser.error("--project-root is required for profile")
+        result = check_model_profile(args.project_root)
+        result["exit_code"] = 0 if result.get("status") == "PASS" else 2
+        save(args.run_dir / "model-profile-preflight.json", result)
+        print(json.dumps(result, ensure_ascii=False))
+        return result["exit_code"]
+    if args.mode == "pytest-baseline":
+        required = (
+            args.log_file,
+            args.pytest_exit_code,
+            args.expected_nodeid,
+            args.expected_actual,
+            args.expected_value,
+        )
+        if any(value is None for value in required):
+            parser.error(
+                "--log-file, --pytest-exit-code, --expected-nodeid, "
+                "--expected-actual, and --expected-value are required for "
+                "pytest-baseline"
+            )
+        result = check_pytest_baseline(
+            args.run_dir,
+            args.log_file,
+            args.pytest_exit_code,
+            args.expected_nodeid,
+            args.expected_actual,
+            args.expected_value,
+        )
+        result["exit_code"] = 0 if result.get("status") == "PASS" else 2
+        save(args.run_dir / "synthetic-pytest-baseline-check.json", result)
+        print(json.dumps(result, ensure_ascii=False))
+        return result["exit_code"]
     result = (
         check_version(args.run_dir)
         if args.mode == "version"
