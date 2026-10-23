@@ -119,7 +119,9 @@ class SyntheticPytestBaselineTests(unittest.TestCase):
         self.assertIn("log_sha256", result)
 
     def test_assertion_without_failed_nodeid_is_rejected(self) -> None:
-        self.log.write_text("E       assert 4 == 3\n1 failed in 0.11s\n", encoding="utf-8")
+        self.log.write_text(
+            "E       assert 4 == 3\n1 failed in 0.11s\n", encoding="utf-8"
+        )
 
         result = self._check()
 
@@ -157,6 +159,7 @@ class SyntheticPytestBaselineTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "FAIL")
         self.assertEqual(result["error_code"], "baseline_log_outside_run")
+
 
 if __name__ == "__main__":
     unittest.main()
