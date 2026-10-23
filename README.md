@@ -264,6 +264,19 @@ The implementation is intentionally read-only: it does not register Bash, Python
 
 The M3 demonstration is deliberately separate from the read-only Agent tools. It creates a proposal from a trusted file digest, persists the proposal and independent reviewer decision in a temporary SQLite ledger, prints a standard diff, consumes the approval once, and applies only to a temporary copy. The fixed `pytest -q` runner records bounded output, exit codes, and timeout cleanup evidence. The source fixture remains unchanged. This is a controlled synthetic process runner, not a claim of OS-level sandboxing or model-generated patch selection. The latest real-model M2 follow-up was executed once with Qwen3.5-4B at context 4096 and max output 1536. Health, model identity, tool pairing, trusted-read citations, fixture immutability, and process cleanup passed; the numeric quality gate remained UNVERIFIABLE, so M2 is still PARTIAL.
 
+### M4 evidence-driven repair workflow
+
+M4 adds a small, deterministic coordinator in [`devflow_agent/repair_workflow.py`](devflow_agent/repair_workflow.py). It composes the existing pytest diagnosis, trusted source evidence, SHA-256-bound diff proposal, explicit reviewer decision, SQLite ledger, one-time isolated apply, and fixed test runner. The workflow emits a sanitized JSON run report with ordered state events; read-only replay verifies state, approvals, hashes, test receipts, evidence, and cleanup proof without executing a write.
+
+Run the synthetic demonstration:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\demo_m4_workflow.py
+.\.venv\Scripts\python.exe scripts\demo_m4_workflow.py --approve --run-id m4-demo-local
+```
+
+The first command stops at `APPROVAL_PENDING`; the second uses a clearly labeled synthetic reviewer and applies only to a disposable copy. The source fixture remains unchanged. The M4 control flow is **VERIFIED** for the deterministic synthetic scope; model-generated patch selection, real user-repository writes, OS-level sandboxing, Docker isolation, and autonomous re-planning remain **NOT_VERIFIED**. See [`docs/M4_EVIDENCE_WORKFLOW.md`](docs/M4_EVIDENCE_WORKFLOW.md) and the latest independent sanitized run summary [`reports/public/M4_REPAIR_WORKFLOW_2026-10-23-AUDIT.md`](reports/public/M4_REPAIR_WORKFLOW_2026-10-23-AUDIT.md).
+
 
 ### Latest bounded M2 real run
 

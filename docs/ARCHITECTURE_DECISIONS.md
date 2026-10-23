@@ -139,3 +139,9 @@ MVP 的合成仓库放在 tests/fixtures/repos/broken_python_project/；评测�
 - 没有读取或设置真实 API Key，没有请求模型服务，没有产生模型调用费用；没有读取真实用户仓库。
 - 没有运行 OpenManus 的 Bash、PythonExecute、写文件、浏览器或 Docker 工具；没有启用 Docker。
 - `python -m venv .venv` 的首次执行因系统临时目录权限而退出 1。随后使用工作区内临时目录引导 pip，并由 `.venv` 的 `pip --version` 命令确认 pip 可用。临时目录已从工作区移除；系统临时目录中的清理警告未尝试越权处理。
+
+## 7. M4 决策：组合现有控制面，不引入第二套 Runtime
+
+M4 落地为 `devflow_agent/repair_workflow.py` 的单运行状态机。它复用 `diagnostics.py`、`patches.py`、`patch_ledger.py` 和 `run_isolated_pytest`，通过 `run_id`、`task_id`、proposal/patch SHA-256、SQLite 事件及脱敏 JSON 报告把诊断、审批和验证绑定起来。审批前只生成 Diff；批准后只向新的合成副本应用一次，源工作区必须保持哈希不变。`RepairWorkflow.replay_report` 以只读方式核验事件序列、状态映射、审批、哈希、测试收据、证据和清理证明，并明确返回 `write_replayed=false`；篡改或不完整的 VERIFIED 报告会被拒绝。
+
+这一决策保持 M1–M3 的工具白名单和 fail-closed 语义，避免为 M4 引入多 Agent、向量库、Docker 或新的持久化系统。合成演示控制流已验证；模型自主补丁、真实用户仓库写入、OS 级沙箱和失败后自主重规划仍未验证。
