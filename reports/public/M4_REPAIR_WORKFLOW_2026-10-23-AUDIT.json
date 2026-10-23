@@ -1,0 +1,54 @@
+{
+  "approval": {
+    "decision": "APPROVED",
+    "patch_sha256": "43a301e784e124a60da901042b2e2b10b95a0ad99360e29803f34b0dd77b449d",
+    "reviewer_id": "synthetic-independent-reviewer"
+  },
+  "baseline_test": {
+    "command": ["pytest", "-q"],
+    "exit_code": 1,
+    "status": "failed",
+    "cleanup_remaining_parent": false
+  },
+  "diagnostic_status": "PASS",
+  "evidence_report": "reports/m4_workflow_runs/m4-20261023-audit-final2/run-report.json",
+  "isolated_copy_cleanup": true,
+  "kind": "devflow_m4_public_acceptance",
+  "model_or_external_api": false,
+  "post_apply_test": {
+    "command": ["pytest", "-q"],
+    "exit_code": 0,
+    "status": "passed",
+    "cleanup_remaining_parent": false
+  },
+  "proposal": {
+    "consumed": true,
+    "original_sha256": "09c7948b8ae6a627b9f670bb2d69bf1f71a69a0ff8f69f41bc83cc3277045388",
+    "replacement_sha256": "3251dbf18617cd67c47707cb9bd1611dbac212ff0ee9814a75b8ce1f34b85aad",
+    "patch_sha256": "43a301e784e124a60da901042b2e2b10b95a0ad99360e29803f34b0dd77b449d",
+    "relative_path": "src/totals.py",
+    "proposal_id": "2a816f0f-83e6-462e-b425-df743e2822ba"
+  },
+  "run_id": "m4-20261023-audit-final2",
+  "schema_version": 1,
+  "source_workspace": {
+    "before_sha256": "bd2bdf3b76a0a84113d3ca3f9bdbee4b4c487cd4be79f0e3dadb212ff8db1d7a",
+    "after_sha256": "bd2bdf3b76a0a84113d3ca3f9bdbee4b4c487cd4be79f0e3dadb212ff8db1d7a",
+    "unchanged": true
+  },
+  "state": "COMPLETED",
+  "state_events": [
+    "CREATED",
+    "BASELINE_TESTED",
+    "DIAGNOSED",
+    "PATCH_PROPOSED",
+    "APPROVAL_PENDING",
+    "APPROVED",
+    "APPLIED",
+    "VERIFYING",
+    "COMPLETED"
+  ],
+  "status": "VERIFIED",
+  "stop_reason": "verification_passed",
+  "task_id": "task-m4-20261023-audit-final2"
+}

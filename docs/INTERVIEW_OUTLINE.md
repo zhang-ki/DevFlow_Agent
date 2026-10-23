@@ -39,3 +39,15 @@
 - `scripts/run_interview_demo.ps1 -Demo m2` 只读取并重新展示保存的真实模型证据，不启动模型，也不把离线重评当作新的真实运行。
 - `scripts/run_interview_demo.ps1 -Demo m3` 运行合成仓库控制流；补丁和 Reviewer 是确定性的，输出不能描述成模型自主修复。
 - 任何未在报告和运行日志中实际执行的能力都标记为 `NOT_VERIFIED`。
+
+## M4：证据驱动修复工作流
+
+M4 是一个有界的单工作流编排器，不是另一套 Agent Runtime。它消费已有 pytest 失败日志，在隔离副本执行基线测试，复用只读诊断和可信源码证据，生成绑定原始文件与补丁摘要的 Diff，并在显式审批前停止。批准后由 SQLite 账本记录一次性授权，只向新的合成副本应用补丁，再运行固定 pytest。报告保留状态事件、测试退出码、审批和源目录哈希，回放只验证证据，不执行写入。
+
+面试演示命令：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\demo_m4_workflow.py --approve --run-id m4-demo-interview
+```
+
+该演示证明确定性的证据和安全合同，不证明模型自主选择补丁、真实个人仓库写入或 OS 级沙箱；这些能力仍为 `NOT_VERIFIED`。

@@ -11,6 +11,12 @@ from .patches import (
     create_patch_proposal,
     reject_patch,
 )
+from .repair_workflow import (
+    RepairWorkflow,
+    WorkflowError,
+    WorkflowLimits,
+    WorkflowState,
+)
 from .repository import (
     AuthorizedWorkspace,
     FileRecord,
@@ -47,4 +53,8 @@ __all__ = [
     "PatchLedger",
     "PatchLedgerError",
     "run_isolated_pytest",
+    "RepairWorkflow",
+    "WorkflowError",
+    "WorkflowLimits",
+    "WorkflowState",
 ]
