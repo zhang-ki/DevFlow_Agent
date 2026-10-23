@@ -54,9 +54,7 @@ def load_fixed_tool_collection() -> Iterator[type]:
     default tool imports and optional runtime dependencies.
     """
     prefix_names = {
-        name
-        for name in sys.modules
-        if name == "app" or name.startswith("app.")
+        name for name in sys.modules if name == "app" or name.startswith("app.")
     }
     previous = {name: sys.modules[name] for name in prefix_names}
     for name in prefix_names:
@@ -127,7 +125,9 @@ class OpenManusToolCollectionIntegrationTests(unittest.TestCase):
         self.assertEqual(tree_hashes(self.repo), self.before)
         self.temporary.cleanup()
 
-    def test_real_fixed_collection_contains_only_two_readonly_tools_and_executes(self) -> None:
+    def test_real_fixed_collection_contains_only_two_readonly_tools_and_executes(
+        self,
+    ) -> None:
         with load_fixed_tool_collection() as tool_collection_type:
             self.assertEqual(
                 Path(
@@ -160,8 +160,7 @@ class OpenManusToolCollectionIntegrationTests(unittest.TestCase):
                     {schema["function"]["name"] for schema in schemas}, set(names)
                 )
                 schemas_by_name = {
-                    schema["function"]["name"]: schema["function"]
-                    for schema in schemas
+                    schema["function"]["name"]: schema["function"] for schema in schemas
                 }
                 for name, tool in collection.tool_map.items():
                     self.assertEqual(schemas_by_name[name], tool.to_param()["function"])
@@ -169,15 +168,18 @@ class OpenManusToolCollectionIntegrationTests(unittest.TestCase):
                         schemas_by_name[name]["parameters"]["additionalProperties"]
                     )
                 self.assertFalse(
-                    {"bash", "python_execute", "str_replace_editor", "mcp"}
-                    & set(names)
+                    {"bash", "python_execute", "str_replace_editor", "mcp"} & set(names)
                 )
                 self.assertEqual(
-                    schemas_by_name["repository_search_readonly"]["parameters"]["required"],
+                    schemas_by_name["repository_search_readonly"]["parameters"][
+                        "required"
+                    ],
                     ["query"],
                 )
                 self.assertEqual(
-                    schemas_by_name["repository_readonly_read"]["parameters"]["required"],
+                    schemas_by_name["repository_readonly_read"]["parameters"][
+                        "required"
+                    ],
                     ["path"],
                 )
 
@@ -191,10 +193,12 @@ class OpenManusToolCollectionIntegrationTests(unittest.TestCase):
                 self.assertEqual(
                     search["result_kind"], "index_candidates_not_read_evidence"
                 )
-                self.assertIn("src/totals.py", {
-                    hit["relative_path"] for hit in search["results"]
-                })
-                self.assertTrue(all(not hit["read_evidence"] for hit in search["results"]))
+                self.assertIn(
+                    "src/totals.py", {hit["relative_path"] for hit in search["results"]}
+                )
+                self.assertTrue(
+                    all(not hit["read_evidence"] for hit in search["results"])
+                )
 
                 source = self.repo / "src" / "totals.py"
                 full_hash = hashlib.sha256(source.read_bytes()).hexdigest()
@@ -254,9 +258,7 @@ class OpenManusToolCollectionIntegrationTests(unittest.TestCase):
             existing = tool_collection_type()
             existing.add_tools(types.SimpleNamespace(name="bash"))
             with self.assertRaises(RepoError):
-                create_openmanus_readonly_collection(
-                    self.workspace, lambda: existing
-                )
+                create_openmanus_readonly_collection(self.workspace, lambda: existing)
             self.assertEqual([tool.name for tool in existing.tools], ["bash"])
 
             with self.assertRaises(RepoError):

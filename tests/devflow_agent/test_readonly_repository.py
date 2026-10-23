@@ -54,12 +54,16 @@ class ReadonlyRepositoryTests(unittest.TestCase):
         )
         found = [symbol for symbol in index.symbols if symbol.name == "total"]
         self.assertEqual(len(found), 1)
-        source_symbol = next(item for item in found if item.relative_path == "src/totals.py")
+        source_symbol = next(
+            item for item in found if item.relative_path == "src/totals.py"
+        )
         self.assertEqual(source_symbol.start_line, 3)
         self.assertEqual(source_symbol.end_line, 5)
         self.assertTrue(all(item.start_line >= 1 for item in index.symbols))
 
-    def test_keyword_search_has_stable_ranking_and_explicit_candidate_state(self) -> None:
+    def test_keyword_search_has_stable_ranking_and_explicit_candidate_state(
+        self,
+    ) -> None:
         index = build_index(self.workspace)
         first = index.search("sum numeric values", limit=10)
         second = index.search("sum numeric values", limit=10)
@@ -71,7 +75,14 @@ class ReadonlyRepositoryTests(unittest.TestCase):
         self.assertTrue(all(hit.matched_line_numbers for hit in first))
         total_hit = next(hit for hit in first if hit.relative_path == "src/totals.py")
         self.assertEqual(total_hit.line_count, 10)
-        self.assertEqual(total_hit.line_count, len((self.repo / "src" / "totals.py").read_text(encoding="utf-8").splitlines()))
+        self.assertEqual(
+            total_hit.line_count,
+            len(
+                (self.repo / "src" / "totals.py")
+                .read_text(encoding="utf-8")
+                .splitlines()
+            ),
+        )
 
     def test_path_and_symbol_filters(self) -> None:
         index = build_index(self.workspace)
@@ -96,7 +107,9 @@ class ReadonlyRepositoryTests(unittest.TestCase):
         self.assertEqual(evidence.start_line, 3)
         self.assertEqual(evidence.end_line, 5)
         self.assertEqual(evidence.full_file_sha256, hashlib.sha256(raw).hexdigest())
-        self.assertEqual(evidence.fragment_sha256, hashlib.sha256(expected_fragment).hexdigest())
+        self.assertEqual(
+            evidence.fragment_sha256, hashlib.sha256(expected_fragment).hexdigest()
+        )
         self.assertEqual(evidence.content.encode("utf-8"), expected_fragment)
         self.assertEqual(evidence.evidence_kind, "trusted_file_read")
         self.assertEqual(evidence.workspace_id, self.workspace.workspace_id)
@@ -104,9 +117,13 @@ class ReadonlyRepositoryTests(unittest.TestCase):
         self.assertEqual(evidence.task_id, "task-a")
         self.assertEqual(evidence.run_id, "run-a")
 
-    def test_omitted_read_range_returns_bounded_preview_and_actual_line_count(self) -> None:
+    def test_omitted_read_range_returns_bounded_preview_and_actual_line_count(
+        self,
+    ) -> None:
         source = self.repo / "src" / "paged.py"
-        source.write_bytes("".join(f"line-{number}\n" for number in range(1, 9)).encode("utf-8"))
+        source.write_bytes(
+            "".join(f"line-{number}\n" for number in range(1, 9)).encode("utf-8")
+        )
         workspace = AuthorizedWorkspace(
             self.repo,
             limits=WorkspaceLimits(max_read_lines=3, max_return_bytes=100),
@@ -135,7 +152,12 @@ class ReadonlyRepositoryTests(unittest.TestCase):
         self.assertEqual(raised.exception.details["max_lines"], 500)
 
     def test_path_traversal_and_absolute_paths_are_rejected(self) -> None:
-        for path in ("../outside.py", "src/../../outside.py", str(self.base / "outside.py"), r"C:\outside.py"):
+        for path in (
+            "../outside.py",
+            "src/../../outside.py",
+            str(self.base / "outside.py"),
+            r"C:\outside.py",
+        ):
             with self.subTest(path=path):
                 with self.assertRaises(RepoError) as raised:
                     self.workspace.read_text(path, start_line=1, end_line=1)
@@ -168,7 +190,9 @@ class ReadonlyRepositoryTests(unittest.TestCase):
             Path, "is_symlink", controlled_is_symlink
         ):
             with self.assertRaises(RepoError) as raised:
-                self.workspace.read_text("src/escape/outside.py", start_line=1, end_line=1)
+                self.workspace.read_text(
+                    "src/escape/outside.py", start_line=1, end_line=1
+                )
         self.assertEqual(raised.exception.code, RepoErrorCode.SYMLINK_ESCAPE)
 
     def test_unicode_line_numbers_match_read_fragments(self) -> None:
@@ -176,9 +200,17 @@ class ReadonlyRepositoryTests(unittest.TestCase):
         path.write_text("first\u2028second\n", encoding="utf-8")
         workspace = AuthorizedWorkspace(self.repo)
         index = build_index(workspace)
-        record = next(item for item in index.file_records if item.relative_path == "src/unicode.txt")
+        record = next(
+            item
+            for item in index.file_records
+            if item.relative_path == "src/unicode.txt"
+        )
         self.assertEqual(record.line_count, 2)
-        hit = next(item for item in index.search("second") if item.relative_path == "src/unicode.txt")
+        hit = next(
+            item
+            for item in index.search("second")
+            if item.relative_path == "src/unicode.txt"
+        )
         self.assertEqual(hit.matched_line_numbers, (2,))
         evidence = workspace.read_text("src/unicode.txt", start_line=1, end_line=1)
         self.assertEqual(evidence.content, "first\u2028")
@@ -195,16 +227,20 @@ class ReadonlyRepositoryTests(unittest.TestCase):
         index = build_index(workspace)
         self.assertLessEqual(index.stats.indexed_bytes, 100)
         self.assertTrue(index.stats.truncated)
+
     def test_file_scan_count_is_bounded(self) -> None:
         workspace = AuthorizedWorkspace(self.repo, limits=WorkspaceLimits(max_files=2))
         index = build_index(workspace)
         self.assertEqual(index.stats.scanned_files, 2)
         self.assertEqual(index.stats.indexed_files, 2)
         self.assertTrue(index.stats.truncated)
+
     def test_symlink_or_junction_escape_is_rejected(self) -> None:
         outside = self.base / "outside"
         outside.mkdir()
-        (outside / "outside.py").write_text("def outside():\n    return True\n", encoding="utf-8")
+        (outside / "outside.py").write_text(
+            "def outside():\n    return True\n", encoding="utf-8"
+        )
         link = self.repo / "src" / "escape"
         try:
             os.symlink(outside, link, target_is_directory=True)
@@ -220,13 +256,17 @@ class ReadonlyRepositoryTests(unittest.TestCase):
                 check=False,
             )
             if completed.returncode != 0:
-                self.skipTest("host does not permit creating a temporary directory junction")
+                self.skipTest(
+                    "host does not permit creating a temporary directory junction"
+                )
         with self.assertRaises(RepoError) as raised:
             self.workspace.read_text("src/escape/outside.py", start_line=1, end_line=2)
         self.assertEqual(raised.exception.code, RepoErrorCode.SYMLINK_ESCAPE)
 
     def test_sensitive_binary_and_large_files_are_excluded(self) -> None:
-        (self.repo / ".env").write_text("FAKE_TEST_VALUE=not-a-secret", encoding="utf-8")
+        (self.repo / ".env").write_text(
+            "FAKE_TEST_VALUE=not-a-secret", encoding="utf-8"
+        )
         config = self.repo / "config"
         config.mkdir()
         (config / "config.toml").write_text('api_key = "not-real"', encoding="utf-8")
@@ -251,7 +291,9 @@ class ReadonlyRepositoryTests(unittest.TestCase):
         self.assertNotIn(".venv/Lib/cached.py", paths)
         self.assertNotIn("image.png", paths)
         self.assertNotIn("large.py", paths)
-        self.assertGreaterEqual(index.stats.skipped_by_reason.get("file_too_large", 0), 1)
+        self.assertGreaterEqual(
+            index.stats.skipped_by_reason.get("file_too_large", 0), 1
+        )
         with self.assertRaises(RepoError) as raised:
             workspace.read_text(".env", start_line=1, end_line=1)
         self.assertEqual(raised.exception.code, RepoErrorCode.UNSUPPORTED_FILE)
@@ -278,14 +320,20 @@ class ReadonlyRepositoryTests(unittest.TestCase):
                 with self.assertRaises(RepoError) as raised:
                     self.workspace.read_text("src/totals.py", start_line=1, end_line=2)
             self.assertEqual(raised.exception.code, RepoErrorCode.STALE_EVIDENCE)
-            self.assertEqual(raised.exception.details["reason"], "post_read_digest_mismatch")
+            self.assertEqual(
+                raised.exception.details["reason"], "post_read_digest_mismatch"
+            )
         finally:
             target.write_bytes(original_bytes)
 
     def test_changed_index_candidate_is_rejected_as_stale(self) -> None:
         index = build_index(self.workspace)
-        record = next(item for item in index.file_records if item.relative_path == "src/totals.py")
-        (self.repo / "src" / "totals.py").write_text("def total(values):\n    return 99\n", encoding="utf-8")
+        record = next(
+            item for item in index.file_records if item.relative_path == "src/totals.py"
+        )
+        (self.repo / "src" / "totals.py").write_text(
+            "def total(values):\n    return 99\n", encoding="utf-8"
+        )
         with self.assertRaises(RepoError) as raised:
             self.workspace.read_text(
                 "src/totals.py",
@@ -327,7 +375,11 @@ class ReadonlyRepositoryTests(unittest.TestCase):
         self.assertIn("bounded preview", read_tool.description)
 
         search = asyncio.run(search_tool.execute(query="total"))
-        total_hit = next(item for item in search["results"] if item["relative_path"] == "src/totals.py")
+        total_hit = next(
+            item
+            for item in search["results"]
+            if item["relative_path"] == "src/totals.py"
+        )
         self.assertEqual(total_hit["line_count"], 10)
         self.assertEqual(total_hit["line_count_source"], "fresh_index_snapshot")
         self.assertFalse(total_hit["read_evidence"])
@@ -338,7 +390,9 @@ class ReadonlyRepositoryTests(unittest.TestCase):
         self.assertFalse(result["truncated"])
         self.assertEqual((result["start_line"], result["end_line"]), (1, 10))
 
-    def test_openmanus_adapter_registers_only_read_tools_without_importing_app(self) -> None:
+    def test_openmanus_adapter_registers_only_read_tools_without_importing_app(
+        self,
+    ) -> None:
         class Registry:
             def __init__(self) -> None:
                 self.tools = []
@@ -359,7 +413,9 @@ class ReadonlyRepositoryTests(unittest.TestCase):
             [tool.name for tool in registry.tools],
             ["repository_search_readonly", "repository_readonly_read"],
         )
-        self.assertEqual(len(search_tool.to_param()["function"]["parameters"]["required"]), 1)
+        self.assertEqual(
+            len(search_tool.to_param()["function"]["parameters"]["required"]), 1
+        )
         isolated_import_probe = r"""
 import sys
 import tempfile
@@ -388,7 +444,6 @@ assert "app.agent" not in sys.modules
         )
         self.assertEqual(probe.returncode, 0, probe.stdout + probe.stderr)
 
-
         def drive_without_event_loop(coroutine):
             try:
                 coroutine.send(None)
@@ -397,10 +452,16 @@ assert "app.agent" not in sys.modules
             raise AssertionError("read-only adapters must complete without suspending")
 
         search_result = json.loads(drive_without_event_loop(search_tool(query="total")))
-        self.assertEqual(search_result["result_kind"], "index_candidates_not_read_evidence")
-        self.assertTrue(all(item["read_evidence"] is False for item in search_result["results"]))
+        self.assertEqual(
+            search_result["result_kind"], "index_candidates_not_read_evidence"
+        )
+        self.assertTrue(
+            all(item["read_evidence"] is False for item in search_result["results"])
+        )
         read_result = json.loads(
-            drive_without_event_loop(read_tool(path="README.md", start_line=1, end_line=1))
+            drive_without_event_loop(
+                read_tool(path="README.md", start_line=1, end_line=1)
+            )
         )
         self.assertEqual(read_result["result_kind"], "trusted_file_read")
         self.assertEqual(read_result["relative_path"], "README.md")

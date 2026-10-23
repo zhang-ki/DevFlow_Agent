@@ -13,7 +13,11 @@ from devflow_agent.diagnostics import DiagnosticReport
 def _citation(valid: bool = True) -> dict:
     return {
         "valid": valid,
-        "citations": [{"relative_path": "src/totals.py", "start_line": 1, "end_line": 2}] if valid else [],
+        "citations": [
+            {"relative_path": "src/totals.py", "start_line": 1, "end_line": 2}
+        ]
+        if valid
+        else [],
         "errors": [] if valid else ["invalid_citation_format"],
     }
 
@@ -21,7 +25,9 @@ def _citation(valid: bool = True) -> dict:
 class M2OutputContractTests(unittest.TestCase):
     def _numeric(self, answer: str) -> dict:
         expected = extract_expected_numeric_claims("Explain sum([-100, 50, -200])")
-        return evaluate_arithmetic_claims(answer, required=True, expected_claims=expected)
+        return evaluate_arithmetic_claims(
+            answer, required=True, expected_claims=expected
+        )
 
     def test_normal_compact_answer_passes(self) -> None:
         answer = (
@@ -77,7 +83,11 @@ class M2OutputContractTests(unittest.TestCase):
             terminal_reason="final_answer",
             trace_issues=[],
             read_evidence_count=0,
-            citation_check={"valid": False, "citations": [], "errors": ["no_trusted_read_evidence"]},
+            citation_check={
+                "valid": False,
+                "citations": [],
+                "errors": ["no_trusted_read_evidence"],
+            },
             numeric_check=numeric,
         )
         self.assertEqual(result["status"], "MISSING_EVIDENCE")
@@ -101,7 +111,10 @@ class M2OutputContractTests(unittest.TestCase):
                 {
                     "test_nodeid": "tests/test_x.py::test_x",
                     "message": "assertion failed",
-                    "root_cause": {"classification": "assertion_mismatch", "confidence": "medium"},
+                    "root_cause": {
+                        "classification": "assertion_mismatch",
+                        "confidence": "medium",
+                    },
                     "test_location": {"relative_path": "tests/test_x.py", "line": 2},
                     "source_location": {"relative_path": "src/f1.py", "line": 1},
                     "evidence": evidence,

@@ -19,13 +19,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .repository import AuthorizedWorkspace, RepoError, RepoErrorCode
+from .repository import AuthorizedWorkspace, RepoError
 
 
 class PatchError(Exception):
     """Stable fail-closed error for patch preview, approval, or apply."""
 
-    def __init__(self, code: str, message: str, *, details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, code: str, message: str, *, details: dict[str, Any] | None = None
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
@@ -50,7 +52,9 @@ class PatchProposal:
     summary: str = ""
     status: str = "PENDING_APPROVAL"
     consumed: bool = False
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -76,7 +80,9 @@ class ApprovalDecision:
     reviewer_id: str
     decision: str
     patch_sha256: str
-    decided_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    decided_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -97,7 +103,9 @@ class PatchReceipt:
     after_sha256: str
     patch_sha256: str
     write_count: int = 1
-    applied_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    applied_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -112,7 +120,9 @@ class PatchReceipt:
         }
 
 
-def _full_text(workspace: AuthorizedWorkspace, relative_path: str) -> tuple[str, str, int]:
+def _full_text(
+    workspace: AuthorizedWorkspace, relative_path: str
+) -> tuple[str, str, int]:
     """Read a complete stable text file through the existing trusted API."""
     try:
         preview = workspace.read_text(relative_path, start_line=1)
@@ -125,7 +135,11 @@ def _full_text(workspace: AuthorizedWorkspace, relative_path: str) -> tuple[str,
             expected_sha256=preview.full_file_sha256,
         )
     except RepoError as exc:
-        raise PatchError(exc.code.value if hasattr(exc.code, "value") else str(exc.code), exc.message, details=exc.details) from exc
+        raise PatchError(
+            exc.code.value if hasattr(exc.code, "value") else str(exc.code),
+            exc.message,
+            details=exc.details,
+        ) from exc
     return evidence.content, evidence.full_file_sha256, evidence.line_count
 
 
@@ -151,16 +165,27 @@ def create_patch_proposal(
     if not task_id or not run_id:
         raise PatchError("invalid_identity", "task_id and run_id are required")
     if not isinstance(replacement_text, str) or "\x00" in replacement_text:
-        raise PatchError("invalid_replacement", "replacement must be UTF-8 text without NUL bytes")
-    if not isinstance(expected_original_sha256, str) or len(expected_original_sha256) != 64:
-        raise PatchError("missing_original_digest", "a 64-character original SHA-256 is required")
+        raise PatchError(
+            "invalid_replacement", "replacement must be UTF-8 text without NUL bytes"
+        )
+    if (
+        not isinstance(expected_original_sha256, str)
+        or len(expected_original_sha256) != 64
+    ):
+        raise PatchError(
+            "missing_original_digest", "a 64-character original SHA-256 is required"
+        )
 
     original_text, current_sha256, line_count = _full_text(workspace, relative_path)
     if current_sha256.casefold() != expected_original_sha256.casefold():
         raise PatchError(
             "stale_workspace_file",
             "the source file changed after its trusted read",
-            details={"relative_path": relative_path, "expected_sha256": expected_original_sha256, "current_sha256": current_sha256},
+            details={
+                "relative_path": relative_path,
+                "expected_sha256": expected_original_sha256,
+                "current_sha256": current_sha256,
+            },
         )
     parts = AuthorizedWorkspace.normalize_relative_path(relative_path)
     normalized = "/".join(parts)
@@ -192,20 +217,34 @@ def create_patch_proposal(
 
 def approve_patch(proposal: PatchProposal, *, reviewer_id: str) -> ApprovalDecision:
     if not reviewer_id or not reviewer_id.strip():
-        raise PatchError("invalid_reviewer", "an independent reviewer identity is required")
+        raise PatchError(
+            "invalid_reviewer", "an independent reviewer identity is required"
+        )
     if proposal.status != "PENDING_APPROVAL" or proposal.consumed:
-        raise PatchError("invalid_proposal_state", "only a pending proposal can be approved")
+        raise PatchError(
+            "invalid_proposal_state", "only a pending proposal can be approved"
+        )
     proposal.status = "APPROVED"
-    return ApprovalDecision(proposal.proposal_id, reviewer_id.strip(), "APPROVED", proposal.patch_sha256)
+    return ApprovalDecision(
+        proposal.proposal_id, reviewer_id.strip(), "APPROVED", proposal.patch_sha256
+    )
 
 
-def reject_patch(proposal: PatchProposal, *, reviewer_id: str, reason: str = "") -> ApprovalDecision:
+def reject_patch(
+    proposal: PatchProposal, *, reviewer_id: str, reason: str = ""
+) -> ApprovalDecision:
     if not reviewer_id or not reviewer_id.strip():
-        raise PatchError("invalid_reviewer", "an independent reviewer identity is required")
+        raise PatchError(
+            "invalid_reviewer", "an independent reviewer identity is required"
+        )
     if proposal.status != "PENDING_APPROVAL" or proposal.consumed:
-        raise PatchError("invalid_proposal_state", "only a pending proposal can be rejected")
+        raise PatchError(
+            "invalid_proposal_state", "only a pending proposal can be rejected"
+        )
     proposal.status = "REJECTED"
-    return ApprovalDecision(proposal.proposal_id, reviewer_id.strip(), "REJECTED", proposal.patch_sha256)
+    return ApprovalDecision(
+        proposal.proposal_id, reviewer_id.strip(), "REJECTED", proposal.patch_sha256
+    )
 
 
 def apply_approved_patch(
@@ -217,11 +256,21 @@ def apply_approved_patch(
 ) -> PatchReceipt:
     """Apply once to a distinct isolated copy, never to the source workspace."""
     if proposal.status != "APPROVED" or proposal.consumed:
-        raise PatchError("approval_required_or_consumed", "a fresh approved proposal is required")
-    if approval.proposal_id != proposal.proposal_id or approval.patch_sha256 != proposal.patch_sha256 or approval.decision != "APPROVED":
-        raise PatchError("approval_binding_mismatch", "approval does not bind this exact proposal")
+        raise PatchError(
+            "approval_required_or_consumed", "a fresh approved proposal is required"
+        )
+    if (
+        approval.proposal_id != proposal.proposal_id
+        or approval.patch_sha256 != proposal.patch_sha256
+        or approval.decision != "APPROVED"
+    ):
+        raise PatchError(
+            "approval_binding_mismatch", "approval does not bind this exact proposal"
+        )
     if proposal.workspace_id != source_workspace.workspace_id:
-        raise PatchError("workspace_binding_mismatch", "proposal belongs to a different workspace")
+        raise PatchError(
+            "workspace_binding_mismatch", "proposal belongs to a different workspace"
+        )
     source_text, source_sha256, _ = _full_text(source_workspace, proposal.relative_path)
     if source_sha256.casefold() != proposal.original_sha256.casefold():
         raise PatchError("stale_workspace_file", "source file changed after preview")
@@ -229,25 +278,43 @@ def apply_approved_patch(
         destination = Path(destination_root).expanduser().resolve(strict=True)
         source_root = source_workspace.root.resolve(strict=True)
     except (OSError, RuntimeError) as exc:
-        raise PatchError("invalid_isolation_root", "destination workspace could not be resolved") from exc
+        raise PatchError(
+            "invalid_isolation_root", "destination workspace could not be resolved"
+        ) from exc
     if destination == source_root:
-        raise PatchError("source_workspace_write_forbidden", "approved patches may only apply to a distinct isolated copy")
+        raise PatchError(
+            "source_workspace_write_forbidden",
+            "approved patches may only apply to a distinct isolated copy",
+        )
     try:
         destination_workspace = AuthorizedWorkspace(destination)
-        destination_text, destination_sha256, _ = _full_text(destination_workspace, proposal.relative_path)
+        destination_text, destination_sha256, _ = _full_text(
+            destination_workspace, proposal.relative_path
+        )
     except (RepoError, PatchError) as exc:
         if isinstance(exc, PatchError):
             raise
-        raise PatchError("invalid_isolation_root", "destination workspace file could not be read") from exc
+        raise PatchError(
+            "invalid_isolation_root", "destination workspace file could not be read"
+        ) from exc
     if destination_sha256.casefold() != proposal.original_sha256.casefold():
-        raise PatchError("destination_version_mismatch", "isolated copy is not the proposed source version")
-    target = destination / Path(*AuthorizedWorkspace.normalize_relative_path(proposal.relative_path))
+        raise PatchError(
+            "destination_version_mismatch",
+            "isolated copy is not the proposed source version",
+        )
+    target = destination / Path(
+        *AuthorizedWorkspace.normalize_relative_path(proposal.relative_path)
+    )
     if target.resolve(strict=False).parent != target.parent.resolve(strict=False):
-        raise PatchError("path_outside_root", "destination path leaves the isolated workspace")
+        raise PatchError(
+            "path_outside_root", "destination path leaves the isolated workspace"
+        )
     target.parent.mkdir(parents=True, exist_ok=True)
     temp_name: str | None = None
     try:
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="", dir=target.parent, delete=False) as stream:
+        with tempfile.NamedTemporaryFile(
+            "w", encoding="utf-8", newline="", dir=target.parent, delete=False
+        ) as stream:
             temp_name = stream.name
             stream.write(proposal.replacement_text)
             stream.flush()

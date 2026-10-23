@@ -145,37 +145,140 @@ class ReadEvidence:
 
 
 _EXCLUDED_DIRS = {
-    ".git", ".venv", "venv", "env", "__pycache__", ".pytest_cache",
-    ".mypy_cache", ".ruff_cache", ".tox", ".nox", "node_modules",
-    "build", "dist", "target", "coverage", "artifacts", "models",
-    "model", "weights", "checkpoints", "runtime", "logs", "cache",
-    ".cache", ".codex", ".aws",
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".tox",
+    ".nox",
+    "node_modules",
+    "build",
+    "dist",
+    "target",
+    "coverage",
+    "artifacts",
+    "models",
+    "model",
+    "weights",
+    "checkpoints",
+    "runtime",
+    "logs",
+    "cache",
+    ".cache",
+    ".codex",
+    ".aws",
 }
 _EXCLUDED_NAMES = {
-    ".env", "config.toml", "config.json", "config.yaml", "config.yml", "config.ini",
-    "settings.toml", "settings.json", "settings.yaml", "settings.yml", "mcp.json",
-    "credentials", "credentials.json", "credentials.toml", "credentials.yaml",
-    "credentials.yml", "secrets", "secrets.json", "secrets.toml", "secrets.yaml",
-    "secrets.yml", ".netrc", ".npmrc", ".pypirc", "id_rsa",
+    ".env",
+    "config.toml",
+    "config.json",
+    "config.yaml",
+    "config.yml",
+    "config.ini",
+    "settings.toml",
+    "settings.json",
+    "settings.yaml",
+    "settings.yml",
+    "mcp.json",
+    "credentials",
+    "credentials.json",
+    "credentials.toml",
+    "credentials.yaml",
+    "credentials.yml",
+    "secrets",
+    "secrets.json",
+    "secrets.toml",
+    "secrets.yaml",
+    "secrets.yml",
+    ".netrc",
+    ".npmrc",
+    ".pypirc",
+    "id_rsa",
     "id_ed25519",
 }
 _EXCLUDED_PATTERNS = (
-    ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "*.kdbx", "*.gguf",
-    "*.safetensors", "*.onnx", "*.pt", "*.pth", "*.ckpt", "*.model",
-    "*.sqlite", "*.sqlite3", "*.db", "*.exe", "*.dll", "*.pdb", "*.pyc",
-    "*.class", "*.so", "*.dylib", "*.bin", "*.zip", "*.7z", "*.tar", "*.gz",
+    ".env.*",
+    "*.pem",
+    "*.key",
+    "*.p12",
+    "*.pfx",
+    "*.kdbx",
+    "*.gguf",
+    "*.safetensors",
+    "*.onnx",
+    "*.pt",
+    "*.pth",
+    "*.ckpt",
+    "*.model",
+    "*.sqlite",
+    "*.sqlite3",
+    "*.db",
+    "*.exe",
+    "*.dll",
+    "*.pdb",
+    "*.pyc",
+    "*.class",
+    "*.so",
+    "*.dylib",
+    "*.bin",
+    "*.zip",
+    "*.7z",
+    "*.tar",
+    "*.gz",
 )
 _SUPPORTED_EXTENSIONS = {
-    ".py", ".pyi", ".md", ".rst", ".txt", ".toml", ".yaml", ".yml",
-    ".json", ".jsonl", ".ini", ".cfg", ".conf", ".xml", ".html", ".css",
-    ".js", ".jsx", ".ts", ".tsx", ".java", ".go", ".rs", ".c", ".h",
-    ".cc", ".cpp", ".hpp", ".cs", ".sql", ".sh", ".ps1", ".bat", ".cmd",
+    ".py",
+    ".pyi",
+    ".md",
+    ".rst",
+    ".txt",
+    ".toml",
+    ".yaml",
+    ".yml",
+    ".json",
+    ".jsonl",
+    ".ini",
+    ".cfg",
+    ".conf",
+    ".xml",
+    ".html",
+    ".css",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".java",
+    ".go",
+    ".rs",
+    ".c",
+    ".h",
+    ".cc",
+    ".cpp",
+    ".hpp",
+    ".cs",
+    ".sql",
+    ".sh",
+    ".ps1",
+    ".bat",
+    ".cmd",
     ".csv",
 }
 _SUPPORTED_NAMES = {
-    ".gitignore", ".gitattributes", ".editorconfig", "dockerfile",
-    "makefile", "procfile", "license", "notice", "requirements.txt",
-    "setup.py", "pyproject.toml",
+    ".gitignore",
+    ".gitattributes",
+    ".editorconfig",
+    "dockerfile",
+    "makefile",
+    "procfile",
+    "license",
+    "notice",
+    "requirements.txt",
+    "setup.py",
+    "pyproject.toml",
 }
 _TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*|[\u3400-\u9fff]+")
 
@@ -207,7 +310,9 @@ class AuthorizedWorkspace:
                 cause_type=type(exc).__name__,
             ) from exc
         if not resolved.is_dir():
-            raise RepoError(RepoErrorCode.ROOT_NOT_FOUND, "repository root is not a directory")
+            raise RepoError(
+                RepoErrorCode.ROOT_NOT_FOUND, "repository root is not a directory"
+            )
         self.root = resolved
         self.limits = limits or WorkspaceLimits()
         self.workspace_id = str(uuid.uuid4())
@@ -215,16 +320,22 @@ class AuthorizedWorkspace:
     @staticmethod
     def normalize_relative_path(value: str) -> tuple[str, ...]:
         if not isinstance(value, str) or not value or "\x00" in value:
-            raise RepoError(RepoErrorCode.INVALID_PATH, "a non-empty relative path is required")
+            raise RepoError(
+                RepoErrorCode.INVALID_PATH, "a non-empty relative path is required"
+            )
         normalized = value.replace("\\", "/")
         win_path = PureWindowsPath(value)
         if normalized.startswith("/") or win_path.is_absolute() or win_path.drive:
-            raise RepoError(RepoErrorCode.PATH_OUTSIDE_ROOT, "absolute paths are not allowed")
+            raise RepoError(
+                RepoErrorCode.PATH_OUTSIDE_ROOT, "absolute paths are not allowed"
+            )
         parts = tuple(part for part in normalized.split("/") if part not in ("", "."))
         if not parts:
             raise RepoError(RepoErrorCode.INVALID_PATH, "path does not name a file")
         if any(part == ".." for part in parts):
-            raise RepoError(RepoErrorCode.PATH_OUTSIDE_ROOT, "parent traversal is not allowed")
+            raise RepoError(
+                RepoErrorCode.PATH_OUTSIDE_ROOT, "parent traversal is not allowed"
+            )
         return parts
 
     def _contains_link(self, parts: tuple[str, ...]) -> bool:
@@ -285,15 +396,24 @@ class AuthorizedWorkspace:
     @staticmethod
     def _supported_text(relative_path: str) -> bool:
         path = PurePosixPath(relative_path)
-        return path.name.casefold() in _SUPPORTED_NAMES or path.suffix.casefold() in _SUPPORTED_EXTENSIONS
+        return (
+            path.name.casefold() in _SUPPORTED_NAMES
+            or path.suffix.casefold() in _SUPPORTED_EXTENSIONS
+        )
 
-    def _read_once(self, path: Path, relative: str) -> tuple[bytes, tuple[int, int, int, int]]:
+    def _read_once(
+        self, path: Path, relative: str
+    ) -> tuple[bytes, tuple[int, int, int, int]]:
         try:
             with path.open("rb") as stream:
                 before = os.fstat(stream.fileno())
                 before_id = _identity(before)
                 if not stat.S_ISREG(before.st_mode):
-                    raise RepoError(RepoErrorCode.NOT_A_FILE, "only regular files can be read", relative_path=relative)
+                    raise RepoError(
+                        RepoErrorCode.NOT_A_FILE,
+                        "only regular files can be read",
+                        relative_path=relative,
+                    )
                 if before.st_size > self.limits.max_file_bytes:
                     raise RepoError(
                         RepoErrorCode.FILE_TOO_LARGE,
@@ -324,7 +444,11 @@ class AuthorizedWorkspace:
     def _read_stable_bytes(self, relative_path: str) -> tuple[bytes, str]:
         path1, rel1 = self._resolve_existing(relative_path)
         if not path1.is_file():
-            raise RepoError(RepoErrorCode.NOT_A_FILE, "workspace path is not a file", relative_path=rel1)
+            raise RepoError(
+                RepoErrorCode.NOT_A_FILE,
+                "workspace path is not a file",
+                relative_path=rel1,
+            )
         data1, identity1 = self._read_once(path1, rel1)
         path2, rel2 = self._resolve_existing(relative_path)
         if path1 != path2 or rel1 != rel2:
@@ -365,7 +489,11 @@ class AuthorizedWorkspace:
             )
         raw, relative = self._read_stable_bytes(relative_path)
         if b"\x00" in raw:
-            raise RepoError(RepoErrorCode.INVALID_TEXT, "binary content is not supported", relative_path=relative)
+            raise RepoError(
+                RepoErrorCode.INVALID_TEXT,
+                "binary content is not supported",
+                relative_path=relative,
+            )
         try:
             decoded_text = raw.decode("utf-8")
         except UnicodeDecodeError as exc:
@@ -377,7 +505,10 @@ class AuthorizedWorkspace:
             ) from exc
 
         full_hash = hashlib.sha256(raw).hexdigest()
-        if expected_sha256 is not None and full_hash.casefold() != expected_sha256.casefold():
+        if (
+            expected_sha256 is not None
+            and full_hash.casefold() != expected_sha256.casefold()
+        ):
             raise RepoError(
                 RepoErrorCode.STALE_EVIDENCE,
                 "current file digest differs from the indexed candidate",
@@ -401,7 +532,10 @@ class AuthorizedWorkspace:
                 RepoErrorCode.INVALID_LINE_RANGE,
                 "start_line must identify an existing 1-based line",
                 relative_path=relative,
-                details={"line_count": line_count, "max_lines": self.limits.max_read_lines},
+                details={
+                    "line_count": line_count,
+                    "max_lines": self.limits.max_read_lines,
+                },
             )
 
         if end_line is None:
@@ -409,7 +543,10 @@ class AuthorizedWorkspace:
             # returned range and truncated flag make this explicit to callers.
             final_line = min(line_count, start_line + self.limits.max_read_lines - 1)
             fragment = b"".join(lines[start_line - 1 : final_line])
-            while final_line >= start_line and len(fragment) > self.limits.max_return_bytes:
+            while (
+                final_line >= start_line
+                and len(fragment) > self.limits.max_return_bytes
+            ):
                 final_line -= 1
                 fragment = b"".join(lines[start_line - 1 : final_line])
             if final_line < start_line:
@@ -435,7 +572,10 @@ class AuthorizedWorkspace:
                     RepoErrorCode.INVALID_LINE_RANGE,
                     "explicit line range is invalid or exceeds the configured limit",
                     relative_path=relative,
-                    details={"line_count": line_count, "max_lines": self.limits.max_read_lines},
+                    details={
+                        "line_count": line_count,
+                        "max_lines": self.limits.max_read_lines,
+                    },
                 )
             final_line = end_line
             fragment = b"".join(lines[start_line - 1 : final_line])
@@ -449,7 +589,10 @@ class AuthorizedWorkspace:
             truncated = False
 
         final_raw, final_relative = self._read_stable_bytes(relative_path)
-        if final_relative != relative or hashlib.sha256(final_raw).hexdigest() != full_hash:
+        if (
+            final_relative != relative
+            or hashlib.sha256(final_raw).hexdigest() != full_hash
+        ):
             raise RepoError(
                 RepoErrorCode.STALE_EVIDENCE,
                 "file changed before read evidence could be issued",
@@ -474,6 +617,7 @@ class AuthorizedWorkspace:
 
     def iter_files(self) -> Iterable[str]:
         """Yield eligible relative paths in stable order, without following links."""
+
         def fail_on_walk_error(error: OSError) -> None:
             raise RepoError(
                 RepoErrorCode.IO_ERROR,
@@ -486,11 +630,17 @@ class AuthorizedWorkspace:
         ):
             current_path = Path(current)
             kept: list[str] = []
-            for directory in sorted(directories, key=lambda item: (item.casefold(), item)):
+            for directory in sorted(
+                directories, key=lambda item: (item.casefold(), item)
+            ):
                 candidate = current_path / directory
                 relative = candidate.relative_to(self.root).as_posix()
                 is_junction = getattr(candidate, "is_junction", lambda: False)
-                if candidate.is_symlink() or is_junction() or self._excluded_reason(relative + "/placeholder"):
+                if (
+                    candidate.is_symlink()
+                    or is_junction()
+                    or self._excluded_reason(relative + "/placeholder")
+                ):
                     continue
                 kept.append(directory)
             directories[:] = kept
@@ -587,15 +737,23 @@ class RepositoryIndex:
         symbol_filter: str | None = None,
         limit: int = 10,
     ) -> tuple[SearchHit, ...]:
-        if not isinstance(limit, int) or limit < 1 or limit > self.workspace.limits.max_search_results:
+        if (
+            not isinstance(limit, int)
+            or limit < 1
+            or limit > self.workspace.limits.max_search_results
+        ):
             raise RepoError(
                 RepoErrorCode.INVALID_LIMIT,
                 "result limit is outside the configured range",
                 details={"max_limit": self.workspace.limits.max_search_results},
             )
-        query_terms = tuple(dict.fromkeys(_tokens(query.strip() if isinstance(query, str) else "")))
+        query_terms = tuple(
+            dict.fromkeys(_tokens(query.strip() if isinstance(query, str) else ""))
+        )
         if not query_terms:
-            raise RepoError(RepoErrorCode.INVALID_QUERY, "search query must contain searchable text")
+            raise RepoError(
+                RepoErrorCode.INVALID_QUERY, "search query must contain searchable text"
+            )
         path_needle = path_filter.replace("\\", "/").casefold() if path_filter else None
         symbol_needle = symbol_filter.casefold() if symbol_filter else None
         candidates: list[SearchHit] = []
@@ -608,19 +766,26 @@ class RepositoryIndex:
                 symbol
                 for symbol in self.symbols
                 if symbol.relative_path == relative
-                and (symbol_needle is None or symbol_needle in symbol.qualified_name.casefold())
+                and (
+                    symbol_needle is None
+                    or symbol_needle in symbol.qualified_name.casefold()
+                )
             )
             if symbol_needle and not file_symbols:
                 continue
 
             path_tokens = frozenset(_tokens(relative))
             symbol_tokens = frozenset(
-                token for symbol in file_symbols for token in _tokens(symbol.qualified_name)
+                token
+                for symbol in file_symbols
+                for token in _tokens(symbol.qualified_name)
             )
             matched = tuple(
                 term
                 for term in query_terms
-                if term in indexed.all_tokens or term in path_tokens or term in symbol_tokens
+                if term in indexed.all_tokens
+                or term in path_tokens
+                or term in symbol_tokens
             )
             if not matched or indexed.record.line_count == 0:
                 continue
@@ -656,7 +821,13 @@ class RepositoryIndex:
                 )
             )
 
-        candidates.sort(key=lambda hit: (-hit.score, hit.relative_path.casefold(), hit.relative_path))
+        candidates.sort(
+            key=lambda hit: (
+                -hit.score,
+                hit.relative_path.casefold(),
+                hit.relative_path,
+            )
+        )
         return tuple(candidates[:limit])
 
 

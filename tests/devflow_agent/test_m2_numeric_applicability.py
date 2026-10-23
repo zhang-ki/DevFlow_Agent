@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -26,7 +25,9 @@ class StaticNumericApplicabilityTests(unittest.TestCase):
             "fragment_sha256": snapshot.fragment_sha256,
         }
 
-    def _workspace(self, source: str) -> tuple[tempfile.TemporaryDirectory, AuthorizedWorkspace, dict]:
+    def _workspace(
+        self, source: str
+    ) -> tuple[tempfile.TemporaryDirectory, AuthorizedWorkspace, dict]:
         temporary = tempfile.TemporaryDirectory(prefix="devflow-static-numeric-")
         root = Path(temporary.name)
         (root / "src").mkdir()
@@ -73,7 +74,9 @@ class StaticNumericApplicabilityTests(unittest.TestCase):
                 trusted_reads=[evidence],
             )
             self.assertEqual(result["status"], "PASS")
-            self.assertEqual(result["claims"][0]["applicability"], "STATICALLY_VERIFIABLE")
+            self.assertEqual(
+                result["claims"][0]["applicability"], "STATICALLY_VERIFIABLE"
+            )
         finally:
             temporary.cleanup()
 
@@ -98,7 +101,9 @@ class StaticNumericApplicabilityTests(unittest.TestCase):
     def test_missing_source_evidence_does_not_pass(self) -> None:
         result = evaluate_arithmetic_claims("total([-1, 1]) returns 0")
         self.assertEqual(result["status"], "UNVERIFIABLE")
-        self.assertEqual(result["claims"][0]["reason"], "trusted_function_source_missing")
+        self.assertEqual(
+            result["claims"][0]["reason"], "trusted_function_source_missing"
+        )
 
     def test_source_expectation_is_not_treated_as_runtime_behavior(self) -> None:
         temporary, _workspace, evidence = self._workspace(
@@ -110,7 +115,9 @@ class StaticNumericApplicabilityTests(unittest.TestCase):
                 trusted_reads=[evidence],
             )
             self.assertEqual(result["status"], "UNVERIFIABLE")
-            self.assertEqual(result["claims"][0]["reason"], "source_expectation_not_runtime_claim")
+            self.assertEqual(
+                result["claims"][0]["reason"], "source_expectation_not_runtime_claim"
+            )
         finally:
             temporary.cleanup()
 

@@ -19,7 +19,10 @@ from unittest.mock import patch
 import httpx
 
 from devflow_agent.openmanus_agent import create_readonly_repository_agent
-from devflow_agent.real_readonly_agent import collect_tool_trace, validate_answer_citations
+from devflow_agent.real_readonly_agent import (
+    collect_tool_trace,
+    validate_answer_citations,
+)
 from devflow_agent.repository import AuthorizedWorkspace, RepoError
 
 
@@ -60,13 +63,19 @@ def load_real_agent_sources() -> Iterator[dict[str, type]]:
 
         with ExitStack() as guards:
             guards.enter_context(
-                patch.object(subprocess, "Popen", side_effect=AssertionError("subprocess import"))
+                patch.object(
+                    subprocess, "Popen", side_effect=AssertionError("subprocess import")
+                )
             )
             guards.enter_context(
-                patch.object(subprocess, "run", side_effect=AssertionError("subprocess import"))
+                patch.object(
+                    subprocess, "run", side_effect=AssertionError("subprocess import")
+                )
             )
             guards.enter_context(
-                patch.object(socket, "socket", side_effect=AssertionError("socket import"))
+                patch.object(
+                    socket, "socket", side_effect=AssertionError("socket import")
+                )
             )
             guards.enter_context(
                 patch.object(
@@ -86,7 +95,9 @@ def load_real_agent_sources() -> Iterator[dict[str, type]]:
                 patch.object(httpx, "Client", side_effect=AssertionError("HTTP import"))
             )
             guards.enter_context(
-                patch.object(httpx, "AsyncClient", side_effect=AssertionError("HTTP import"))
+                patch.object(
+                    httpx, "AsyncClient", side_effect=AssertionError("HTTP import")
+                )
             )
             with patch.object(loguru_logger, "add", return_value=0):
                 agent_module = importlib.import_module("app.agent.toolcall")
@@ -96,9 +107,13 @@ def load_real_agent_sources() -> Iterator[dict[str, type]]:
                 schema = importlib.import_module("app.schema")
                 llm_module = importlib.import_module("app.llm")
                 if agent_package.ToolCallAgent is not agent_module.ToolCallAgent:
-                    raise AssertionError("lazy Agent export did not resolve the real class")
+                    raise AssertionError(
+                        "lazy Agent export did not resolve the real class"
+                    )
                 if tool_package.ToolCollection is not collection_module.ToolCollection:
-                    raise AssertionError("lazy Tool export did not resolve the real class")
+                    raise AssertionError(
+                        "lazy Tool export did not resolve the real class"
+                    )
                 yield {
                     "ToolCallAgent": agent_module.ToolCallAgent,
                     "ToolCollection": collection_module.ToolCollection,
@@ -126,7 +141,9 @@ def run_immediate(coroutine):
     raise AssertionError("the offline Agent Loop unexpectedly suspended")
 
 
-def tool_call(types_: dict[str, type], call_id: str, name: str, arguments: dict) -> object:
+def tool_call(
+    types_: dict[str, type], call_id: str, name: str, arguments: dict
+) -> object:
     return types_["ToolCall"](
         id=call_id,
         function=types_["Function"](
@@ -149,7 +166,9 @@ def make_scripted_llm(llm_type: type, responses: list, on_call=None):
             self.on_call = callback
             self.calls: list[dict] = []
 
-        async def ask_tool(self, *, messages, system_msgs=None, tools=None, tool_choice=None):
+        async def ask_tool(
+            self, *, messages, system_msgs=None, tools=None, tool_choice=None
+        ):
             snapshot = [message.to_dict() for message in messages]
             self.calls.append(
                 {
@@ -215,7 +234,9 @@ class OpenManusAgentLoopTests(unittest.TestCase):
         stack.enter_context(patch.object(httpx, "AsyncClient", side_effect=blocked))
         return stack
 
-    def test_real_agent_loop_searches_reads_and_answers_with_matching_evidence(self) -> None:
+    def test_real_agent_loop_searches_reads_and_answers_with_matching_evidence(
+        self,
+    ) -> None:
         with load_real_agent_sources() as source_types:
             root = REPOSITORY_ROOT
             self.assertEqual(
@@ -246,7 +267,9 @@ class OpenManusAgentLoopTests(unittest.TestCase):
                     {schema["function"]["name"] for schema in schemas},
                     {"repository_search_readonly", "repository_readonly_read"},
                 )
-                tool_messages = [message for message in messages if message["role"] == "tool"]
+                tool_messages = [
+                    message for message in messages if message["role"] == "tool"
+                ]
                 if call_number == 2:
                     self.assertEqual(len(tool_messages), 1)
                     self.assertEqual(tool_messages[0]["tool_call_id"], "search-1")
@@ -258,7 +281,9 @@ class OpenManusAgentLoopTests(unittest.TestCase):
                         "src/totals.py",
                         {hit["relative_path"] for hit in result["results"]},
                     )
-                    self.assertTrue(all(not hit["read_evidence"] for hit in result["results"]))
+                    self.assertTrue(
+                        all(not hit["read_evidence"] for hit in result["results"])
+                    )
                 if call_number == 3:
                     self.assertEqual(len(tool_messages), 2)
                     self.assertEqual(tool_messages[1]["tool_call_id"], "read-2")
@@ -269,7 +294,9 @@ class OpenManusAgentLoopTests(unittest.TestCase):
                     self.assertEqual(result["end_line"], 5)
                     self.assertEqual(
                         result["full_file_sha256"],
-                        hashlib.sha256((self.repo / "src" / "totals.py").read_bytes()).hexdigest(),
+                        hashlib.sha256(
+                            (self.repo / "src" / "totals.py").read_bytes()
+                        ).hexdigest(),
                     )
                     self.assertIn("return sum(values)", result["content"])
                     evidence_seen.append(result)
@@ -316,7 +343,11 @@ class OpenManusAgentLoopTests(unittest.TestCase):
             self.assertIn("sum(values)", agent.messages[-1].content)
             self.assertIn(agent.messages[-1].content, result)
             self.assertEqual(
-                [message.tool_call_id for message in agent.messages if message.role == "tool"],
+                [
+                    message.tool_call_id
+                    for message in agent.messages
+                    if message.role == "tool"
+                ],
                 ["search-1", "read-2"],
             )
 
@@ -327,50 +358,87 @@ class OpenManusAgentLoopTests(unittest.TestCase):
                 messages(
                     role="assistant",
                     content="",
-                    tool_calls=[tool_call(source_types, "search-recover", "repository_search_readonly", {"query": "total"})],
+                    tool_calls=[
+                        tool_call(
+                            source_types,
+                            "search-recover",
+                            "repository_search_readonly",
+                            {"query": "total"},
+                        )
+                    ],
                 ),
                 messages(
                     role="assistant",
                     content="",
-                    tool_calls=[tool_call(source_types, "read-bad-range", "repository_readonly_read", {
-                        "path": "src/totals.py", "start_line": 1, "end_line": 20
-                    })],
+                    tool_calls=[
+                        tool_call(
+                            source_types,
+                            "read-bad-range",
+                            "repository_readonly_read",
+                            {"path": "src/totals.py", "start_line": 1, "end_line": 20},
+                        )
+                    ],
                 ),
                 messages(
                     role="assistant",
                     content="",
-                    tool_calls=[tool_call(source_types, "read-corrected", "repository_readonly_read", {
-                        "path": "src/totals.py"
-                    })],
+                    tool_calls=[
+                        tool_call(
+                            source_types,
+                            "read-corrected",
+                            "repository_readonly_read",
+                            {"path": "src/totals.py"},
+                        )
+                    ],
                 ),
                 messages.assistant_message(
                     "The total function returns sum(values) (src/totals.py:3-5)."
                 ),
             ]
 
-            def inspect_turn(call_number: int, conversation: list[dict], _schemas) -> None:
-                tool_messages = [message for message in conversation if message["role"] == "tool"]
+            def inspect_turn(
+                call_number: int, conversation: list[dict], _schemas
+            ) -> None:
+                tool_messages = [
+                    message for message in conversation if message["role"] == "tool"
+                ]
                 if call_number == 2:
-                    search_result = json.loads(tool_messages[-1]["content"].split("\n", 1)[-1])
-                    total_hit = next(item for item in search_result["results"] if item["relative_path"] == "src/totals.py")
+                    search_result = json.loads(
+                        tool_messages[-1]["content"].split("\n", 1)[-1]
+                    )
+                    total_hit = next(
+                        item
+                        for item in search_result["results"]
+                        if item["relative_path"] == "src/totals.py"
+                    )
                     self.assertEqual(total_hit["line_count"], 10)
                 if call_number == 3:
-                    self.assertEqual(tool_messages[-1]["tool_call_id"], "read-bad-range")
+                    self.assertEqual(
+                        tool_messages[-1]["tool_call_id"], "read-bad-range"
+                    )
                     error = json.loads(tool_messages[-1]["content"].split("\n", 1)[-1])
                     self.assertEqual(error["error"], "invalid_line_range")
                     self.assertTrue(error["recoverable"])
                     self.assertEqual(error["details"]["line_count"], 10)
                     self.assertEqual(error["details"]["max_lines"], 500)
                 if call_number == 4:
-                    self.assertEqual(tool_messages[-1]["tool_call_id"], "read-corrected")
-                    read_result = json.loads(tool_messages[-1]["content"].split("\n", 1)[-1])
+                    self.assertEqual(
+                        tool_messages[-1]["tool_call_id"], "read-corrected"
+                    )
+                    read_result = json.loads(
+                        tool_messages[-1]["content"].split("\n", 1)[-1]
+                    )
                     self.assertEqual(read_result["result_kind"], "trusted_file_read")
                     self.assertEqual(read_result["relative_path"], "src/totals.py")
-                    self.assertEqual((read_result["start_line"], read_result["end_line"]), (1, 10))
+                    self.assertEqual(
+                        (read_result["start_line"], read_result["end_line"]), (1, 10)
+                    )
                     self.assertEqual(read_result["line_count"], 10)
                     self.assertEqual(
                         read_result["full_file_sha256"],
-                        hashlib.sha256((self.repo / "src" / "totals.py").read_bytes()).hexdigest(),
+                        hashlib.sha256(
+                            (self.repo / "src" / "totals.py").read_bytes()
+                        ).hexdigest(),
                     )
 
             agent, llm = self.make_agent(source_types, responses, on_call=inspect_turn)
@@ -390,7 +458,9 @@ class OpenManusAgentLoopTests(unittest.TestCase):
             self.assertEqual(checked["citations"][0]["start_line"], 3)
             self.assertEqual(
                 checked["citations"][0]["full_file_sha256"],
-                hashlib.sha256((self.repo / "src" / "totals.py").read_bytes()).hexdigest(),
+                hashlib.sha256(
+                    (self.repo / "src" / "totals.py").read_bytes()
+                ).hexdigest(),
             )
 
     def test_recovery_budget_exhaustion_fails_with_matched_tool_results(self) -> None:
@@ -400,60 +470,97 @@ class OpenManusAgentLoopTests(unittest.TestCase):
                 messages(
                     role="assistant",
                     content="",
-                    tool_calls=[tool_call(source_types, "search-budget", "repository_search_readonly", {"query": "total"})],
+                    tool_calls=[
+                        tool_call(
+                            source_types,
+                            "search-budget",
+                            "repository_search_readonly",
+                            {"query": "total"},
+                        )
+                    ],
                 ),
                 messages(
                     role="assistant",
                     content="",
-                    tool_calls=[tool_call(source_types, "read-bad-1", "repository_readonly_read", {
-                        "path": "src/totals.py", "start_line": 1, "end_line": 20
-                    })],
+                    tool_calls=[
+                        tool_call(
+                            source_types,
+                            "read-bad-1",
+                            "repository_readonly_read",
+                            {"path": "src/totals.py", "start_line": 1, "end_line": 20},
+                        )
+                    ],
                 ),
                 messages(
                     role="assistant",
                     content="",
-                    tool_calls=[tool_call(source_types, "read-bad-2", "repository_readonly_read", {
-                        "path": "src/totals.py", "start_line": 1, "end_line": 30
-                    })],
+                    tool_calls=[
+                        tool_call(
+                            source_types,
+                            "read-bad-2",
+                            "repository_readonly_read",
+                            {"path": "src/totals.py", "start_line": 1, "end_line": 30},
+                        )
+                    ],
                 ),
                 messages.assistant_message("Should not be used."),
             ]
             agent, llm = self.make_agent(source_types, responses)
             with self.guard_external_effects():
                 run_immediate(agent.run("Explain the total function."))
-            tool_messages = [message for message in agent.messages if message.role == "tool"]
+            tool_messages = [
+                message for message in agent.messages if message.role == "tool"
+            ]
             self.assertEqual(len(llm.calls), 3)
-            self.assertEqual([message.tool_call_id for message in tool_messages], [
-                "search-budget", "read-bad-1", "read-bad-2"
-            ])
+            self.assertEqual(
+                [message.tool_call_id for message in tool_messages],
+                ["search-budget", "read-bad-1", "read-bad-2"],
+            )
             self.assertEqual(agent.terminal_reason, "tool_error_recovery_limit")
             self.assertEqual(agent.tool_error_recoveries_used, 1)
-            self.assertFalse(any(
-                message.role == "assistant" and message.content == "Should not be used."
-                for message in agent.messages
-            ))
+            self.assertFalse(
+                any(
+                    message.role == "assistant"
+                    and message.content == "Should not be used."
+                    for message in agent.messages
+                )
+            )
             trace, reads, issues = collect_tool_trace(agent.messages)
             self.assertEqual(len(reads), 0)
             self.assertIn("tool_execution_error", issues)
-            self.assertEqual([item["status"] for item in trace], [
-                "completed", "error", "error"
-            ])
+            self.assertEqual(
+                [item["status"] for item in trace], ["completed", "error", "error"]
+            )
 
-    def test_duplicate_native_tool_call_id_is_rejected_before_second_execution(self) -> None:
+    def test_duplicate_native_tool_call_id_is_rejected_before_second_execution(
+        self,
+    ) -> None:
         with load_real_agent_sources() as source_types:
             messages = source_types["Message"]
             responses = [
                 messages(
                     role="assistant",
                     content="",
-                    tool_calls=[tool_call(source_types, "reused-id", "repository_search_readonly", {"query": "total"})],
+                    tool_calls=[
+                        tool_call(
+                            source_types,
+                            "reused-id",
+                            "repository_search_readonly",
+                            {"query": "total"},
+                        )
+                    ],
                 ),
                 messages(
                     role="assistant",
                     content="",
-                    tool_calls=[tool_call(source_types, "reused-id", "repository_readonly_read", {
-                        "path": "src/totals.py"
-                    })],
+                    tool_calls=[
+                        tool_call(
+                            source_types,
+                            "reused-id",
+                            "repository_readonly_read",
+                            {"path": "src/totals.py"},
+                        )
+                    ],
                 ),
             ]
             agent, llm = self.make_agent(source_types, responses)
@@ -511,9 +618,13 @@ class OpenManusAgentLoopTests(unittest.TestCase):
                         )
                     ],
                 ),
-                messages.assistant_message("The path escaped the workspace and was rejected."),
+                messages.assistant_message(
+                    "The path escaped the workspace and was rejected."
+                ),
             ]
-            traversal_agent, traversal_llm = self.make_agent(source_types, traversal_sequence)
+            traversal_agent, traversal_llm = self.make_agent(
+                source_types, traversal_sequence
+            )
             with self.guard_external_effects():
                 run_immediate(traversal_agent.run("Read a path outside the workspace"))
             traversal_result = next(
@@ -548,7 +659,9 @@ class OpenManusAgentLoopTests(unittest.TestCase):
             self.assertEqual(agent.terminal_reason, "model_truncated")
             self.assertFalse(any(message.role == "tool" for message in agent.messages))
 
-    def test_live_profile_rejects_tool_calls_without_complete_finish_reason(self) -> None:
+    def test_live_profile_rejects_tool_calls_without_complete_finish_reason(
+        self,
+    ) -> None:
         with load_real_agent_sources() as source_types:
             messages = source_types["Message"]
             response = messages(
@@ -605,7 +718,9 @@ class OpenManusAgentLoopTests(unittest.TestCase):
                                 )()
                             ],
                             "usage": type(
-                                "Usage", (), {"prompt_tokens": 2, "completion_tokens": 1}
+                                "Usage",
+                                (),
+                                {"prompt_tokens": 2, "completion_tokens": 1},
                             )(),
                         },
                     )()
@@ -615,7 +730,9 @@ class OpenManusAgentLoopTests(unittest.TestCase):
                 def encode(text):
                     return [0] * len(text)
 
-            with patch.object(llm_module, "AsyncOpenAI", return_value=object()), patch.object(
+            with patch.object(
+                llm_module, "AsyncOpenAI", return_value=object()
+            ), patch.object(
                 llm_module.tiktoken, "get_encoding", return_value=LocalTokenizer()
             ):
                 llm = source_types["LLM"](
@@ -639,7 +756,9 @@ class OpenManusAgentLoopTests(unittest.TestCase):
             self.assertEqual(message.content, "partial")
             self.assertEqual(llm.last_finish_reason, "length")
 
-    def test_step_budget_and_factory_rejects_unbounded_or_untrusted_agent_classes(self) -> None:
+    def test_step_budget_and_factory_rejects_unbounded_or_untrusted_agent_classes(
+        self,
+    ) -> None:
         with load_real_agent_sources() as source_types:
             messages = source_types["Message"]
             repeated = [

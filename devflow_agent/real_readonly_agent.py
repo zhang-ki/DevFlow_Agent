@@ -9,8 +9,8 @@ import json
 import os
 import re
 import socket
-import tomllib
 import time
+import tomllib
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -65,7 +65,6 @@ def _citation_fence_is_valid(match: re.Match[str]) -> bool:
     )
 
 
-
 class ReadonlyAgentError(Exception):
     """Safe error contract; messages never contain credentials or raw URLs."""
 
@@ -107,7 +106,9 @@ def _parse_local_endpoint(base_url: str) -> tuple[str, int, str]:
         host = parsed.hostname
         port = parsed.port or (443 if parsed.scheme == "https" else 80)
     except ValueError as exc:
-        raise ReadonlyAgentError("invalid_model_endpoint", "Local model endpoint is malformed") from exc
+        raise ReadonlyAgentError(
+            "invalid_model_endpoint", "Local model endpoint is malformed"
+        ) from exc
     if (
         parsed.scheme not in {"http", "https"}
         or not host
@@ -137,9 +138,13 @@ def _parse_local_endpoint(base_url: str) -> tuple[str, int, str]:
     try:
         addresses = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
     except OSError as exc:
-        raise ReadonlyAgentError("model_endpoint_unresolved", "Local model host could not be resolved") from exc
+        raise ReadonlyAgentError(
+            "model_endpoint_unresolved", "Local model host could not be resolved"
+        ) from exc
     if not addresses:
-        raise ReadonlyAgentError("model_endpoint_unresolved", "Local model host resolved to no addresses")
+        raise ReadonlyAgentError(
+            "model_endpoint_unresolved", "Local model host resolved to no addresses"
+        )
     for address in addresses:
         try:
             if not ipaddress.ip_address(address[4][0].split("%", 1)[0]).is_loopback:
@@ -148,7 +153,10 @@ def _parse_local_endpoint(base_url: str) -> tuple[str, int, str]:
                     "Only loopback model endpoints are allowed by this read-only CLI",
                 )
         except ValueError as exc:
-            raise ReadonlyAgentError("model_endpoint_unresolved", "Model host did not resolve to an IP address") from exc
+            raise ReadonlyAgentError(
+                "model_endpoint_unresolved",
+                "Model host did not resolve to an IP address",
+            ) from exc
     display_host = f"[{host}]" if ":" in host else host
     default_port = 443 if parsed.scheme == "https" else 80
     authority = display_host if port == default_port else f"{display_host}:{port}"
@@ -167,23 +175,39 @@ def load_local_model_profile(project_root: Path) -> LocalModelProfile:
     try:
         raw = tomllib.loads(config_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, tomllib.TOMLDecodeError) as exc:
-        raise ReadonlyAgentError("invalid_model_config", "Local model configuration could not be parsed") from exc
+        raise ReadonlyAgentError(
+            "invalid_model_config", "Local model configuration could not be parsed"
+        ) from exc
     llm = raw.get("llm")
     if not isinstance(llm, dict):
-        raise ReadonlyAgentError("invalid_model_config", "The explicit config must contain an [llm] table")
+        raise ReadonlyAgentError(
+            "invalid_model_config", "The explicit config must contain an [llm] table"
+        )
     model = llm.get("model")
     base_url = llm.get("base_url")
     api_type = str(llm.get("api_type", "")).lower()
     api_key = llm.get("api_key", "")
     max_tokens = llm.get("max_tokens", DEFAULT_OUTPUT_TOKENS)
     if not isinstance(model, str) or not model.strip() or not isinstance(base_url, str):
-        raise ReadonlyAgentError("invalid_model_config", "The local model name or endpoint is missing")
+        raise ReadonlyAgentError(
+            "invalid_model_config", "The local model name or endpoint is missing"
+        )
     if api_type not in {"", "openai", "ollama"}:
-        raise ReadonlyAgentError("unsupported_model_api", "Use an OpenAI-compatible local endpoint")
+        raise ReadonlyAgentError(
+            "unsupported_model_api", "Use an OpenAI-compatible local endpoint"
+        )
     if not isinstance(api_key, str):
-        raise ReadonlyAgentError("invalid_model_config", "The local API key field must be text")
-    if isinstance(max_tokens, bool) or not isinstance(max_tokens, int) or max_tokens < 1:
-        raise ReadonlyAgentError("invalid_model_config", "The model output budget must be a positive integer")
+        raise ReadonlyAgentError(
+            "invalid_model_config", "The local API key field must be text"
+        )
+    if (
+        isinstance(max_tokens, bool)
+        or not isinstance(max_tokens, int)
+        or max_tokens < 1
+    ):
+        raise ReadonlyAgentError(
+            "invalid_model_config", "The model output budget must be a positive integer"
+        )
     _, _, sanitized = _parse_local_endpoint(base_url)
     return LocalModelProfile(
         model=model.strip(),
@@ -196,12 +220,20 @@ def load_local_model_profile(project_root: Path) -> LocalModelProfile:
 
 
 def _message_value(message: Any, key: str, default: Any = None) -> Any:
-    value = message.get(key, default) if isinstance(message, dict) else getattr(message, key, default)
+    value = (
+        message.get(key, default)
+        if isinstance(message, dict)
+        else getattr(message, key, default)
+    )
     return getattr(value, "value", value)
 
 
 def _decode_tool_result(content: str) -> Any:
-    raw = content.split("\n", 1)[-1] if content.startswith("Observed output of cmd ") else content
+    raw = (
+        content.split("\n", 1)[-1]
+        if content.startswith("Observed output of cmd ")
+        else content
+    )
     try:
         return json.loads(raw)
     except (TypeError, ValueError):
@@ -210,7 +242,9 @@ def _decode_tool_result(content: str) -> Any:
         return {"raw_text": raw}
 
 
-def collect_tool_trace(messages: Iterable[Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str]]:
+def collect_tool_trace(
+    messages: Iterable[Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str]]:
     """Pair real assistant calls and tool results; extract read evidence only."""
     trace: list[dict[str, Any]] = []
     issues: list[str] = []
@@ -225,7 +259,9 @@ def collect_tool_trace(messages: Iterable[Any]) -> tuple[list[dict[str, Any]], l
                 call_id = _message_value(call, "id", "")
                 function = _message_value(call, "function", None)
                 name = _message_value(function, "name", "") if function else ""
-                arguments = _message_value(function, "arguments", "{}") if function else "{}"
+                arguments = (
+                    _message_value(function, "arguments", "{}") if function else "{}"
+                )
                 if not call_id or call_id in by_id:
                     issues.append("missing_or_duplicate_tool_call_id")
                     if call_id in by_id:
@@ -255,7 +291,9 @@ def collect_tool_trace(messages: Iterable[Any]) -> tuple[list[dict[str, Any]], l
             if item["status"] != "pending":
                 issues.append("duplicate_or_rejected_tool_result")
                 continue
-            result = _decode_tool_result(str(_message_value(message, "content", "") or ""))
+            result = _decode_tool_result(
+                str(_message_value(message, "content", "") or "")
+            )
             item["result"] = result
             reported_name = _message_value(message, "name", "")
             if reported_name != item["tool"]:
@@ -286,7 +324,9 @@ def collect_tool_trace(messages: Iterable[Any]) -> tuple[list[dict[str, Any]], l
                         "evidence_id",
                     )
                     valid_hash = bool(
-                        re.fullmatch(r"[0-9a-fA-F]{64}", str(result.get("full_file_sha256", "")))
+                        re.fullmatch(
+                            r"[0-9a-fA-F]{64}", str(result.get("full_file_sha256", ""))
+                        )
                     )
                     content = result.get("content")
                     fragment_hash = result.get("fragment_sha256")
@@ -294,7 +334,8 @@ def collect_tool_trace(messages: Iterable[Any]) -> tuple[list[dict[str, Any]], l
                         isinstance(content, str)
                         and isinstance(fragment_hash, str)
                         and bool(re.fullmatch(r"[0-9a-fA-F]{64}", fragment_hash))
-                        and hashlib.sha256(content.encode("utf-8")).hexdigest() == fragment_hash
+                        and hashlib.sha256(content.encode("utf-8")).hexdigest()
+                        == fragment_hash
                     )
                     valid_range = (
                         isinstance(result.get("start_line"), int)
@@ -387,7 +428,10 @@ def validate_answer_citations(
             continue
         if workspace is not None:
             evidence_workspace_id = evidence.get("workspace_id")
-            if evidence_workspace_id and evidence_workspace_id != workspace.workspace_id:
+            if (
+                evidence_workspace_id
+                and evidence_workspace_id != workspace.workspace_id
+            ):
                 errors.append("citation_evidence_mismatch")
                 continue
             try:
@@ -436,7 +480,11 @@ def validate_answer_citations(
         path = match.group("path")
         start_line = int(match.group("start"))
         end_line = int(match.group("end") or start_line)
-        citation = {"relative_path": path, "start_line": start_line, "end_line": end_line}
+        citation = {
+            "relative_path": path,
+            "start_line": start_line,
+            "end_line": end_line,
+        }
         citations.append(citation)
         ranges = evidence_by_path.get(path, [])
         if not ranges:
@@ -446,7 +494,10 @@ def validate_answer_citations(
             (
                 evidence
                 for evidence in ranges
-                if evidence["start_line"] <= start_line <= end_line <= evidence["end_line"]
+                if evidence["start_line"]
+                <= start_line
+                <= end_line
+                <= evidence["end_line"]
             ),
             None,
         )
@@ -461,18 +512,25 @@ def validate_answer_citations(
     }
 
 
-def probe_loopback_endpoint(profile: LocalModelProfile, timeout_seconds: float = 2.0) -> None:
+def probe_loopback_endpoint(
+    profile: LocalModelProfile, timeout_seconds: float = 2.0
+) -> None:
     host, port, _ = _parse_local_endpoint(profile.base_url)
     try:
         addresses = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
         # One direct, proxy-free probe. Choose IPv4 where available; IPv6 can be
         # configured explicitly by using ::1 in the endpoint URL.
-        address = next((item for item in addresses if item[0] == socket.AF_INET), addresses[0])
+        address = next(
+            (item for item in addresses if item[0] == socket.AF_INET), addresses[0]
+        )
         with socket.socket(address[0], address[1], address[2]) as client:
             client.settimeout(timeout_seconds)
             client.connect(address[4])
     except OSError as exc:
-        raise ReadonlyAgentError("local_model_unreachable", "The configured local model endpoint did not accept a TCP connection") from exc
+        raise ReadonlyAgentError(
+            "local_model_unreachable",
+            "The configured local model endpoint did not accept a TCP connection",
+        ) from exc
 
 
 def bind_single_attempt_model_call(llm: Any, request_timeout_seconds: int) -> None:
@@ -533,10 +591,17 @@ async def _run_bounded_agent_correction(
     """Continue the same read-only OpenManus agent for a bounded correction."""
     from app.schema import AgentState
 
-    if isinstance(step_budget, bool) or not isinstance(step_budget, int) or not 1 <= step_budget <= MAX_AGENT_STEPS:
+    if (
+        isinstance(step_budget, bool)
+        or not isinstance(step_budget, int)
+        or not 1 <= step_budget <= MAX_AGENT_STEPS
+    ):
         return 0
     if agent.state is not AgentState.IDLE:
-        raise ReadonlyAgentError("agent_not_idle", "The read-only agent cannot continue from its current state")
+        raise ReadonlyAgentError(
+            "agent_not_idle",
+            "The read-only agent cannot continue from its current state",
+        )
     agent.current_step = 0
     agent.max_steps = step_budget
     agent.terminal_reason = "step_limit"
@@ -564,10 +629,22 @@ async def run_local_readonly_question(
     """Run one bounded real-model question against an explicitly local endpoint."""
     if not isinstance(question, str) or not question.strip():
         raise ReadonlyAgentError("invalid_question", "Question must not be empty")
-    if isinstance(max_steps, bool) or not isinstance(max_steps, int) or not 1 <= max_steps <= MAX_AGENT_STEPS:
-        raise ReadonlyAgentError("invalid_step_limit", "Step limit must be between 1 and 12")
-    if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, int) or not 1 <= timeout_seconds <= MAX_RUN_TIMEOUT_SECONDS:
-        raise ReadonlyAgentError("invalid_timeout", "Run timeout must be between 1 and 300 seconds")
+    if (
+        isinstance(max_steps, bool)
+        or not isinstance(max_steps, int)
+        or not 1 <= max_steps <= MAX_AGENT_STEPS
+    ):
+        raise ReadonlyAgentError(
+            "invalid_step_limit", "Step limit must be between 1 and 12"
+        )
+    if (
+        isinstance(timeout_seconds, bool)
+        or not isinstance(timeout_seconds, int)
+        or not 1 <= timeout_seconds <= MAX_RUN_TIMEOUT_SECONDS
+    ):
+        raise ReadonlyAgentError(
+            "invalid_timeout", "Run timeout must be between 1 and 300 seconds"
+        )
     if max_output_tokens is not None and (
         isinstance(max_output_tokens, bool)
         or not isinstance(max_output_tokens, int)
@@ -580,7 +657,9 @@ async def run_local_readonly_question(
 
     project_root = Path(__file__).resolve().parents[1]
     profile = load_local_model_profile(project_root)
-    effective_max_tokens = profile.max_tokens if max_output_tokens is None else max_output_tokens
+    effective_max_tokens = (
+        profile.max_tokens if max_output_tokens is None else max_output_tokens
+    )
     expected_numeric_claims = extract_expected_numeric_claims(question)
     probe_loopback_endpoint(profile)
 
@@ -591,10 +670,12 @@ async def run_local_readonly_question(
 
     import httpx
     from openai import AsyncOpenAI
+
     from app.agent.toolcall import ToolCallAgent
     from app.config import config
     from app.llm import LLM, TokenCounter
     from app.tool.tool_collection import ToolCollection
+
     from .openmanus_agent import create_readonly_repository_agent
 
     settings = config.llm["default"].model_copy(
@@ -648,7 +729,10 @@ async def run_local_readonly_question(
                 "local_client_cleanup_failed",
                 f"Local client setup failed ({type(exc).__name__}) and its resources could not be closed",
             ) from cleanup_error
-        raise ReadonlyAgentError("local_client_init_failed", f"Local model client initialization failed ({type(exc).__name__})") from exc
+        raise ReadonlyAgentError(
+            "local_client_init_failed",
+            f"Local model client initialization failed ({type(exc).__name__})",
+        ) from exc
     try:
         bind_single_attempt_model_call(llm, request_timeout)
     except Exception as exc:
@@ -686,7 +770,11 @@ async def run_local_readonly_question(
         await llm.client.close()
 
     if agent is None:
-        citation_check = {"valid": False, "citations": [], "errors": ["no_trusted_read_evidence"]}
+        citation_check = {
+            "valid": False,
+            "citations": [],
+            "errors": ["no_trusted_read_evidence"],
+        }
         numeric_check = evaluate_arithmetic_claims(
             "",
             required=bool(expected_numeric_claims),
@@ -708,12 +796,18 @@ async def run_local_readonly_question(
             "reason": "agent_initialization_failed",
             "model": profile.model,
             "endpoint": profile.endpoint_sanitized,
-            "error_type": error_type if "error_type" in locals() else "AgentInitializationError",
+            "error_type": error_type
+            if "error_type" in locals()
+            else "AgentInitializationError",
             "tool_trace": [],
             "read_evidence_count": 0,
             "citations": citation_check,
             "answer_quality": quality,
-            "quality_correction": {"limit": 1, "attempts": 0, "reason": "agent_initialization_failed"},
+            "quality_correction": {
+                "limit": 1,
+                "attempts": 0,
+                "reason": "agent_initialization_failed",
+            },
             "answer": "",
         }
 
@@ -726,7 +820,9 @@ async def run_local_readonly_question(
         and not (_message_value(message, "tool_calls", None) or [])
         and (_message_value(message, "content", "") or "").strip()
     ]
-    answer = str(_message_value(final_messages[-1], "content", "")) if final_messages else ""
+    answer = (
+        str(_message_value(final_messages[-1], "content", "")) if final_messages else ""
+    )
     citation_check = validate_answer_citations(answer, reads, workspace=workspace)
     numeric_check = evaluate_arithmetic_claims(
         answer,
@@ -793,7 +889,11 @@ async def run_local_readonly_question(
             and not (_message_value(message, "tool_calls", None) or [])
             and (_message_value(message, "content", "") or "").strip()
         ]
-        answer = str(_message_value(final_messages[-1], "content", "")) if final_messages else ""
+        answer = (
+            str(_message_value(final_messages[-1], "content", ""))
+            if final_messages
+            else ""
+        )
         citation_check = validate_answer_citations(answer, reads, workspace=workspace)
         numeric_check = evaluate_arithmetic_claims(
             answer,
@@ -847,9 +947,15 @@ async def run_local_readonly_question(
         "answer_quality": quality,
         "answer": answer,
     }
-    if run_status == "failed" and failure_reason and (
-        failure_reason == "provider_or_runtime_error"
-        or failure_reason.endswith("_error")
+    if (
+        run_status == "failed"
+        and failure_reason
+        and (
+            failure_reason == "provider_or_runtime_error"
+            or failure_reason.endswith("_error")
+        )
     ):
-        result["error_type"] = error_type if "error_type" in locals() else "RuntimeError"
+        result["error_type"] = (
+            error_type if "error_type" in locals() else "RuntimeError"
+        )
     return result

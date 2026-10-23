@@ -176,7 +176,6 @@ def extract_expected_numeric_claims(text: str) -> list[tuple[str, int | float]]:
     return expected
 
 
-
 def _trusted_read_documents(
     trusted_reads: Iterable[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -201,7 +200,8 @@ def _trusted_read_documents(
             or not isinstance(content, str)
             or not isinstance(fragment_sha256, str)
             or not re.fullmatch(r"[0-9a-fA-F]{64}", fragment_sha256)
-            or hashlib.sha256(content.encode("utf-8")).hexdigest() != fragment_sha256.lower()
+            or hashlib.sha256(content.encode("utf-8")).hexdigest()
+            != fragment_sha256.lower()
             or not isinstance(full_sha256, str)
             or not re.fullmatch(r"[0-9a-fA-F]{64}", full_sha256)
         ):
@@ -258,7 +258,10 @@ def _safe_static_value(
     if isinstance(node, ast.BinOp):
         left = _safe_static_value(node.left, environment, depth + 1)
         right = _safe_static_value(node.right, environment, depth + 1)
-        if not all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in (left, right)):
+        if not all(
+            isinstance(value, (int, float)) and not isinstance(value, bool)
+            for value in (left, right)
+        ):
             raise _UnverifiableExpression("binary_non_numeric_value")
         try:
             if isinstance(node.op, ast.Add):
@@ -308,7 +311,10 @@ def _evaluate_static_project_call(
             if isinstance(node, ast.FunctionDef) and node.name == call.func.id:
                 candidates.append((document, node))
     if not candidates:
-        return {"applicability": "UNSUPPORTED", "reason": "trusted_function_source_missing"}
+        return {
+            "applicability": "UNSUPPORTED",
+            "reason": "trusted_function_source_missing",
+        }
     if len(candidates) != 1:
         return {"applicability": "UNSUPPORTED", "reason": "ambiguous_function_source"}
 
@@ -323,9 +329,17 @@ def _evaluate_static_project_call(
         or function.args.kw_defaults
         or len(arguments.posonlyargs) + len(arguments.args) != len(argument_values)
     ):
-        return {"applicability": "UNSUPPORTED", "reason": "unsupported_function_signature"}
+        return {
+            "applicability": "UNSUPPORTED",
+            "reason": "unsupported_function_signature",
+        }
     body = list(function.body)
-    if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) and isinstance(body[0].value.value, str):
+    if (
+        body
+        and isinstance(body[0], ast.Expr)
+        and isinstance(body[0].value, ast.Constant)
+        and isinstance(body[0].value.value, str)
+    ):
         body = body[1:]
     if len(body) != 1 or not isinstance(body[0], ast.Return) or body[0].value is None:
         return {"applicability": "UNSUPPORTED", "reason": "unsupported_control_flow"}
@@ -338,7 +352,11 @@ def _evaluate_static_project_call(
     if not isinstance(actual, (int, float)) or isinstance(actual, bool):
         return {"applicability": "UNSUPPORTED", "reason": "non_numeric_return"}
     start_line = document.get("start_line")
-    source_line = function.lineno + start_line - 1 if isinstance(start_line, int) else function.lineno
+    source_line = (
+        function.lineno + start_line - 1
+        if isinstance(start_line, int)
+        else function.lineno
+    )
     return {
         "applicability": "STATICALLY_VERIFIABLE",
         "actual_value": actual,
@@ -355,7 +373,9 @@ def _looks_like_source_expectation(answer: str, match: re.Match[str]) -> bool:
     if line_end < 0:
         line_end = len(answer)
     context = answer[line_start:line_end].lower()
-    return any(marker in context for marker in ("expects", "assert", "test expects", "asserts"))
+    return any(
+        marker in context for marker in ("expects", "assert", "test expects", "asserts")
+    )
 
 
 def _evaluate_numeric_claim_expression(
@@ -367,7 +387,7 @@ def _evaluate_numeric_claim_expression(
         claimed = _check_number(float(claimed_text))
         if re.fullmatch(r"[+-]?\d+", claimed_text):
             claimed = int(claimed_text)
-    except (ValueError, OverflowError) as exc:
+    except (ValueError, OverflowError):
         return {
             "expression": expression,
             "claimed_value": claimed_text,
@@ -404,8 +424,11 @@ def _evaluate_numeric_claim_expression(
         "applicability": applicability,
         "verification": "PASS" if matches else "NUMERIC_MISMATCH",
     }
-    result.update({key: value for key, value in source_info.items() if key != "applicability"})
+    result.update(
+        {key: value for key, value in source_info.items() if key != "applicability"}
+    )
     return result
+
 
 def evaluate_arithmetic_claims(
     answer: str,
@@ -428,11 +451,15 @@ def evaluate_arithmetic_claims(
     sum_matches = list(_SUM_CLAIM_RE.finditer(answer))
     candidates.extend((m.start(), m.end(), m) for m in sum_matches)
     for match in _CALL_CLAIM_RE.finditer(answer):
-        if any(match.start() < end and match.end() > start for start, end, _ in candidates):
+        if any(
+            match.start() < end and match.end() > start for start, end, _ in candidates
+        ):
             continue
         candidates.append((match.start(), match.end(), match))
     for match in _ARITHMETIC_CLAIM_RE.finditer(answer):
-        if any(match.start() < end and match.end() > start for start, end, _ in candidates):
+        if any(
+            match.start() < end and match.end() > start for start, end, _ in candidates
+        ):
             continue
         candidates.append((match.start(), match.end(), match))
     structured_expression = _STRUCTURED_EXPRESSION_RE.search(answer)
@@ -440,14 +467,19 @@ def evaluate_arithmetic_claims(
     if structured_expression is not None and structured_result is not None:
         expression_start = structured_expression.start("expression")
         expression_end = structured_expression.end("expression")
-        if not any(expression_start < end and expression_end > start for start, end, _ in candidates):
+        if not any(
+            expression_start < end and expression_end > start
+            for start, end, _ in candidates
+        ):
             # The existing claim regexes require an adjacent relation.  The
             # structured Expression/Result form is a bounded equivalent.
-            candidates.append((
-                structured_expression.start(),
-                structured_result.end(),
-                (structured_expression, structured_result),
-            ))
+            candidates.append(
+                (
+                    structured_expression.start(),
+                    structured_result.end(),
+                    (structured_expression, structured_result),
+                )
+            )
     candidates.sort(key=lambda item: item[0])
 
     claims: list[dict[str, Any]] = []
@@ -455,12 +487,16 @@ def evaluate_arithmetic_claims(
     for _, _, match in candidates:
         if isinstance(match, tuple):
             expression_match, result_match = match
-            expression = expression_match.group("expression").strip().strip("\x60").strip()
+            expression = (
+                expression_match.group("expression").strip().strip("\x60").strip()
+            )
             claimed_text = result_match.group("claimed")
         else:
             expression = match.group("expression").strip().strip("\x60").strip()
             claimed_text = match.group("claimed")
-        if not isinstance(match, tuple) and _looks_like_source_expectation(answer, match):
+        if not isinstance(match, tuple) and _looks_like_source_expectation(
+            answer, match
+        ):
             claims.append(
                 {
                     "expression": expression,
@@ -474,7 +510,9 @@ def evaluate_arithmetic_claims(
             )
             errors.append("numeric_claim_unverifiable")
             continue
-        claim = _evaluate_numeric_claim_expression(expression, claimed_text, trusted_read_list)
+        claim = _evaluate_numeric_claim_expression(
+            expression, claimed_text, trusted_read_list
+        )
         claims.append(claim)
         if claim.get("verification") == "NUMERIC_MISMATCH":
             errors.append("numeric_result_mismatch")
@@ -487,7 +525,8 @@ def evaluate_arithmetic_claims(
             (
                 claim
                 for claim in claims
-                if re.sub(r"\s+", "", str(claim.get("expression", ""))) == normalized_expected
+                if re.sub(r"\s+", "", str(claim.get("expression", "")))
+                == normalized_expected
             ),
             None,
         )
@@ -568,11 +607,17 @@ def evaluate_answer_quality(
         status = "PASS"
     return {
         "status": status,
-        "issues": sorted(set(issues + citation_errors + list(numeric_check.get("errors") or []))),
+        "issues": sorted(
+            set(issues + citation_errors + list(numeric_check.get("errors") or []))
+        ),
         "components": {
             "execution": "PASS" if execution_ok else "MODEL_OR_TOOL_FAILURE",
-            "citation": "PASS" if citation_check.get("valid") else (
-                "INVALID_CITATION" if read_evidence_count > 0 and citation_check.get("citations") else "MISSING_EVIDENCE"
+            "citation": "PASS"
+            if citation_check.get("valid")
+            else (
+                "INVALID_CITATION"
+                if read_evidence_count > 0 and citation_check.get("citations")
+                else "MISSING_EVIDENCE"
             ),
             "numeric": numeric_check.get("status", "UNVERIFIABLE"),
             "semantic_entailment": "NOT_AUTOMATICALLY_VERIFIED",

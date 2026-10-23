@@ -150,7 +150,8 @@ def create_readonly_repository_agent(
                 last_content = self.messages[-1].content if self.messages else ""
                 self.terminal_reason = (
                     "context_limit"
-                    if last_content and last_content.startswith("Maximum token limit reached")
+                    if last_content
+                    and last_content.startswith("Maximum token limit reached")
                     else "empty_or_invalid_model_response"
                 )
                 self.state = AgentState.FINISHED
@@ -217,7 +218,8 @@ def create_readonly_repository_agent(
                 )
                 if (
                     is_recoverable_range
-                    and self.tool_error_recoveries_used < MAX_READONLY_TOOL_ERROR_RECOVERIES
+                    and self.tool_error_recoveries_used
+                    < MAX_READONLY_TOOL_ERROR_RECOVERIES
                 ):
                     self.tool_error_recoveries_used += 1
                     self.terminal_reason = "recoverable_tool_error_observed"

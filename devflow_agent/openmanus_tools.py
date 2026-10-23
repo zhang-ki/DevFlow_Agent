@@ -24,9 +24,11 @@ class ToolCollectionLike(Protocol):
     tools: tuple[Any, ...]
     tool_map: dict[str, Any]
 
-    def add_tools(self, *tools: Any) -> Any: ...
+    def add_tools(self, *tools: Any) -> Any:
+        ...
 
-    def to_params(self) -> list[dict[str, Any]]: ...
+    def to_params(self) -> list[dict[str, Any]]:
+        ...
 
 
 def create_openmanus_readonly_collection(
@@ -79,9 +81,7 @@ def create_openmanus_readonly_collection(
         )
 
     try:
-        parameter_names = {
-            item["function"]["name"] for item in collection.to_params()
-        }
+        parameter_names = {item["function"]["name"] for item in collection.to_params()}
     except (AttributeError, KeyError, TypeError) as exc:
         raise RepoError(
             RepoErrorCode.UNSAFE_REGISTRY_PROFILE,

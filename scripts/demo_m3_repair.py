@@ -17,6 +17,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+
 # Make the checkout importable when invoked as ``python scripts/demo...``.
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -29,9 +30,21 @@ from devflow_agent.repository import AuthorizedWorkspace
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="M3 synthetic patch approval demo")
-    parser.add_argument("--approve", action="store_true", help="approve and apply only to a temporary isolated copy")
-    parser.add_argument("--task-id", default="demo-m3-task", help="task identifier recorded in the synthetic ledger")
-    parser.add_argument("--run-id", default="demo-m3-run", help="run identifier recorded in the synthetic ledger")
+    parser.add_argument(
+        "--approve",
+        action="store_true",
+        help="approve and apply only to a temporary isolated copy",
+    )
+    parser.add_argument(
+        "--task-id",
+        default="demo-m3-task",
+        help="task identifier recorded in the synthetic ledger",
+    )
+    parser.add_argument(
+        "--run-id",
+        default="demo-m3-run",
+        help="run identifier recorded in the synthetic ledger",
+    )
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="devflow-m3-source-") as temp:
         fixture = Path(temp) / "repo"
@@ -47,7 +60,9 @@ def main() -> int:
         before = hashlib.sha256(source.read_bytes()).hexdigest()
         workspace = AuthorizedWorkspace(fixture)
         ledger = PatchLedger(Path(temp) / "execution-ledger.sqlite3")
-        baseline = run_isolated_pytest(fixture, destination_root=Path(temp) / "baseline-copy", timeout_seconds=60)
+        baseline = run_isolated_pytest(
+            fixture, destination_root=Path(temp) / "baseline-copy", timeout_seconds=60
+        )
         ledger.record_test_result(baseline, phase="baseline")
         # The fixture adds the implementation frame that a captured traceback
         # would contain in a real CI report; it remains synthetic and bounded.
@@ -57,7 +72,11 @@ def main() -> int:
             + str(baseline["stderr_tail"])
             + "\nsrc/totals.py:2: in total\n"
         )
-        report = asyncio.run(asyncio.to_thread(diagnose_failures, workspace, log, exit_code=int(baseline["exit_code"])))
+        report = asyncio.run(
+            asyncio.to_thread(
+                diagnose_failures, workspace, log, exit_code=int(baseline["exit_code"])
+            )
+        )
         proposal = create_patch_proposal(
             workspace,
             "src/totals.py",
@@ -75,13 +94,18 @@ def main() -> int:
             "approval": None,
             "isolated_test": None,
             "ledger_path": str(Path(temp) / "execution-ledger.sqlite3"),
-            "source_unchanged": hashlib.sha256(source.read_bytes()).hexdigest() == before,
+            "source_unchanged": hashlib.sha256(source.read_bytes()).hexdigest()
+            == before,
         }
         print(json.dumps(result, ensure_ascii=False, indent=2))
         if not args.approve:
             return 0
-        decision = ledger.approve(proposal, reviewer_id="independent-synthetic-reviewer")
-        with tempfile.TemporaryDirectory(prefix="devflow-m3-isolated-") as isolated_temp:
+        decision = ledger.approve(
+            proposal, reviewer_id="independent-synthetic-reviewer"
+        )
+        with tempfile.TemporaryDirectory(
+            prefix="devflow-m3-isolated-"
+        ) as isolated_temp:
             isolated = Path(isolated_temp) / "repo"
             shutil.copytree(fixture, isolated)
             receipt = ledger.apply_approved(
@@ -94,11 +118,22 @@ def main() -> int:
             result["proposal"] = proposal.to_dict()
             result["receipt"] = receipt.to_dict()
             result["isolated_test"] = run_isolated_pytest(isolated, timeout_seconds=60)
-            ledger.record_test_result(result["isolated_test"], phase="post_apply", proposal_id=proposal.proposal_id)
+            ledger.record_test_result(
+                result["isolated_test"],
+                phase="post_apply",
+                proposal_id=proposal.proposal_id,
+            )
             result["ledger_snapshot"] = ledger.snapshot()
-            result["source_unchanged"] = hashlib.sha256(source.read_bytes()).hexdigest() == before
+            result["source_unchanged"] = (
+                hashlib.sha256(source.read_bytes()).hexdigest() == before
+            )
             print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 0 if result["isolated_test"]["status"] == "passed" and result["source_unchanged"] else 3
+        return (
+            0
+            if result["isolated_test"]["status"] == "passed"
+            and result["source_unchanged"]
+            else 3
+        )
 
 
 if __name__ == "__main__":

@@ -57,7 +57,9 @@ class PatchApprovalFlowTests(unittest.TestCase):
 
     def test_rejection_is_fail_closed(self) -> None:
         proposal = self.proposal()
-        decision = reject_patch(proposal, reviewer_id="independent-reviewer", reason="unsafe")
+        decision = reject_patch(
+            proposal, reviewer_id="independent-reviewer", reason="unsafe"
+        )
         self.assertEqual(decision.decision, "REJECTED")
         self.assertEqual(proposal.status, "REJECTED")
         self.assertEqual((self.root / self.path).read_bytes(), self.original)
@@ -82,16 +84,28 @@ class PatchApprovalFlowTests(unittest.TestCase):
             "def total(values):\n    return sum(values)\n",
         )
         with self.assertRaisesRegex(PatchError, "approved proposal"):
-            apply_approved_patch(proposal, decision, source_workspace=self.workspace, destination_root=isolated)
+            apply_approved_patch(
+                proposal,
+                decision,
+                source_workspace=self.workspace,
+                destination_root=isolated,
+            )
 
     def test_stale_source_and_destination_are_rejected(self) -> None:
         proposal = self.proposal()
         decision = approve_patch(proposal, reviewer_id="independent-reviewer")
-        (self.root / self.path).write_text("def total(values):\n    return 1\n", encoding="utf-8")
+        (self.root / self.path).write_text(
+            "def total(values):\n    return 1\n", encoding="utf-8"
+        )
         isolated = Path(self.temp.name) / "isolated"
         copytree(self.root, isolated)
         with self.assertRaisesRegex(PatchError, "source file changed"):
-            apply_approved_patch(proposal, decision, source_workspace=self.workspace, destination_root=isolated)
+            apply_approved_patch(
+                proposal,
+                decision,
+                source_workspace=self.workspace,
+                destination_root=isolated,
+            )
 
     def test_path_traversal_and_source_destination_are_rejected(self) -> None:
         with self.assertRaises(PatchError):
@@ -106,7 +120,12 @@ class PatchApprovalFlowTests(unittest.TestCase):
         proposal = self.proposal()
         decision = approve_patch(proposal, reviewer_id="independent-reviewer")
         with self.assertRaisesRegex(PatchError, "distinct isolated copy"):
-            apply_approved_patch(proposal, decision, source_workspace=self.workspace, destination_root=self.root)
+            apply_approved_patch(
+                proposal,
+                decision,
+                source_workspace=self.workspace,
+                destination_root=self.root,
+            )
 
 
 if __name__ == "__main__":

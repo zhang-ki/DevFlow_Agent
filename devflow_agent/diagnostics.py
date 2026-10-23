@@ -11,9 +11,9 @@ from __future__ import annotations
 import asyncio
 import json
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from .repository import AuthorizedWorkspace, RepoError
 from .tools import RepositoryReadTool, RepositorySearchTool
@@ -124,7 +124,9 @@ class DiagnosticReport:
                     "test_location": item.get("test_location"),
                     "source_location": item.get("source_location"),
                     "evidence": evidence,
-                    "unconfirmed": list(item.get("uncertainties") or [])[:MAX_COMPACT_UNCERTAINTIES],
+                    "unconfirmed": list(item.get("uncertainties") or [])[
+                        :MAX_COMPACT_UNCERTAINTIES
+                    ],
                 }
             )
         return {
@@ -138,10 +140,17 @@ class DiagnosticReport:
         }
 
     def to_compact_json(self) -> str:
-        return json.dumps(self.to_compact_dict(), ensure_ascii=False, indent=2, sort_keys=True)
+        return json.dumps(
+            self.to_compact_dict(), ensure_ascii=False, indent=2, sort_keys=True
+        )
 
     def to_compact_markdown(self) -> str:
-        lines = ["# Compact CI diagnosis", "", f"- Status: **{self.status}**", f"- Exit code: `{self.exit_code}`"]
+        lines = [
+            "# Compact CI diagnosis",
+            "",
+            f"- Status: **{self.status}**",
+            f"- Exit code: `{self.exit_code}`",
+        ]
         for failure in self.to_compact_dict()["failures"]:
             lines.extend(
                 [
@@ -262,13 +271,19 @@ def parse_pytest_log(log_text: str, *, exit_code: int | None = None) -> ParsedPy
         warnings.append("log_truncated_at_limit")
     summaries = list(_FAILED_RE.finditer(text))[:MAX_FAILURES]
     locations = list(_LOCATION_RE.finditer(text))
-    errors = [_redact(item.group("message").strip()) for item in _ERROR_LINE_RE.finditer(text)]
+    errors = [
+        _redact(item.group("message").strip()) for item in _ERROR_LINE_RE.finditer(text)
+    ]
     failures: list[FailureEvent] = []
     for index, summary in enumerate(summaries):
         nodeid = summary.group("nodeid")
         test_path = _path_from_nodeid(nodeid)
         test_location = next(
-            (item for item in locations if _path_from_nodeid(item.group("path")) == test_path),
+            (
+                item
+                for item in locations
+                if _path_from_nodeid(item.group("path")) == test_path
+            ),
             None,
         )
         source_location = next(
@@ -279,9 +294,13 @@ def parse_pytest_log(log_text: str, *, exit_code: int | None = None) -> ParsedPy
             ),
             None,
         )
-        message = _redact(summary.group("message") or (errors[index] if index < len(errors) else ""))
+        message = _redact(
+            summary.group("message") or (errors[index] if index < len(errors) else "")
+        )
         combined = " ".join([message, " ".join(errors)])
-        exception = next((m.group("name") for m in _EXCEPTION_RE.finditer(combined)), None)
+        exception = next(
+            (m.group("name") for m in _EXCEPTION_RE.finditer(combined)), None
+        )
         start = summary.start()
         end = summaries[index + 1].start() if index + 1 < len(summaries) else len(text)
         excerpt = _redact(text[start:end].strip(), 4_000)
@@ -291,8 +310,12 @@ def parse_pytest_log(log_text: str, *, exit_code: int | None = None) -> ParsedPy
                 test_name=_test_name_from_nodeid(nodeid),
                 test_path=test_path,
                 test_line=int(test_location.group("line")) if test_location else None,
-                source_path=_path_from_nodeid(source_location.group("path")) if source_location else None,
-                source_line=int(source_location.group("line")) if source_location else None,
+                source_path=_path_from_nodeid(source_location.group("path"))
+                if source_location
+                else None,
+                source_line=int(source_location.group("line"))
+                if source_location
+                else None,
                 exception_type=exception,
                 message=message or "pytest failure did not include a message",
                 excerpt=excerpt,
@@ -302,11 +325,15 @@ def parse_pytest_log(log_text: str, *, exit_code: int | None = None) -> ParsedPy
         warnings.append("no_structured_failed_summary")
     if len(summaries) > MAX_FAILURES:
         warnings.append("failure_count_truncated_at_limit")
-    return ParsedPytestLog(tuple(failures), exit_code, truncated, tuple(sorted(set(warnings))))
+    return ParsedPytestLog(
+        tuple(failures), exit_code, truncated, tuple(sorted(set(warnings)))
+    )
 
 
 def _search_query(failure: FailureEvent) -> str:
-    words = _WORD_RE.findall(" ".join((failure.test_name, failure.exception_type or "", failure.message)))
+    words = _WORD_RE.findall(
+        " ".join((failure.test_name, failure.exception_type or "", failure.message))
+    )
     return " ".join(dict.fromkeys(words))[:240] or "pytest failure"
 
 
@@ -330,7 +357,11 @@ async def diagnose_failures_async(
             candidates = list(search_result.get("results") or [])
         except (RepoError, TypeError, ValueError):
             candidates = []
-        candidate_paths = [item.get("relative_path") for item in candidates if item.get("relative_path")]
+        candidate_paths = [
+            item.get("relative_path")
+            for item in candidates
+            if item.get("relative_path")
+        ]
         direct_path = _relative_candidate(workspace, failure.source_path)
         if direct_path and direct_path not in candidate_paths:
             candidate_paths.insert(0, direct_path)
@@ -339,9 +370,13 @@ async def diagnose_failures_async(
         for candidate_path in candidate_paths[:5]:
             if not isinstance(candidate_path, str):
                 continue
-            line = failure.source_line if candidate_path == failure.source_path else failure.test_line
+            line = (
+                failure.source_line
+                if candidate_path == failure.source_path
+                else failure.test_line
+            )
             start_line = max(1, (line or 1) - 3)
-            end_line = (line or 1) + 4
+            (line or 1) + 4
             try:
                 read_result = await read_tool.execute(
                     path=candidate_path,
@@ -381,9 +416,15 @@ async def diagnose_failures_async(
             "The log and bounded source evidence identify a candidate location; they do not prove causality without rerunning the test.",
         ]
         if not source_hint_available:
-            uncertainties.insert(0, "The log did not identify an implementation source frame; test output alone is insufficient to prove a root cause.")
+            uncertainties.insert(
+                0,
+                "The log did not identify an implementation source frame; test output alone is insufficient to prove a root cause.",
+            )
         if not evidence:
-            uncertainties.insert(0, "No trusted source read could be obtained inside the authorized workspace.")
+            uncertainties.insert(
+                0,
+                "No trusted source read could be obtained inside the authorized workspace.",
+            )
         reports.append(
             {
                 "test_nodeid": failure.nodeid,
@@ -399,9 +440,13 @@ async def diagnose_failures_async(
                 "search_candidates": candidates[:5],
                 "evidence": evidence,
                 "root_cause": {
-                    "classification": classification if evidence and source_hint_available else "UNVERIFIABLE",
+                    "classification": classification
+                    if evidence and source_hint_available
+                    else "UNVERIFIABLE",
                     "confidence": confidence,
-                    "status": "CANDIDATE" if evidence and source_hint_available else "UNVERIFIABLE",
+                    "status": "CANDIDATE"
+                    if evidence and source_hint_available
+                    else "UNVERIFIABLE",
                 },
                 "uncertainties": uncertainties,
                 "log_excerpt": failure.excerpt,
@@ -411,14 +456,18 @@ async def diagnose_failures_async(
         status = "UNVERIFIABLE"
     elif evidence_count == 0:
         status = "UNVERIFIABLE"
-    elif any(item.get("root_cause", {}).get("status") == "UNVERIFIABLE" for item in reports):
+    elif any(
+        item.get("root_cause", {}).get("status") == "UNVERIFIABLE" for item in reports
+    ):
         status = "PARTIAL"
     else:
         status = "PASS"
     metrics = {
         "failures_parsed": len(parsed.failures),
         "top1_file_candidates": top1_hits,
-        "top1_file_rate": (top1_hits / len(parsed.failures)) if parsed.failures else None,
+        "top1_file_rate": (top1_hits / len(parsed.failures))
+        if parsed.failures
+        else None,
         "trusted_evidence_items": evidence_count,
         "commands_executed": 0,
         "read_only_tools": ["repository_search_readonly", "repository_readonly_read"],
@@ -442,10 +491,14 @@ def diagnose_failures(
     exit_code: int | None = None,
 ) -> DiagnosticReport:
     """Synchronous CLI/test wrapper around the bounded async tool path."""
-    return asyncio.run(diagnose_failures_async(workspace, log_text, exit_code=exit_code))
+    return asyncio.run(
+        diagnose_failures_async(workspace, log_text, exit_code=exit_code)
+    )
 
 
-def evaluate_diagnostic_case(report: DiagnosticReport, expected: dict[str, Any]) -> dict[str, Any]:
+def evaluate_diagnostic_case(
+    report: DiagnosticReport, expected: dict[str, Any]
+) -> dict[str, Any]:
     """Compare a report with a fixed gold case without changing the report."""
     failures = report.parsed_failures
     expected_path = expected.get("expected_source_path")
@@ -459,11 +512,23 @@ def evaluate_diagnostic_case(report: DiagnosticReport, expected: dict[str, Any])
     return {
         "file_top1": bool(top_paths and top_paths[0] == expected_path),
         "file_top3": expected_path in top_paths[:3],
-        "test_localized": any(item.get("test_nodeid") == expected_test for item in failures),
-        "exception_classified": any(item.get("exception_type") == expected_exception for item in failures),
-        "evidence_paths": sorted({path for item in failures for path in [
-            evidence.get("relative_path") for evidence in item.get("evidence", [])
-        ] if path}),
+        "test_localized": any(
+            item.get("test_nodeid") == expected_test for item in failures
+        ),
+        "exception_classified": any(
+            item.get("exception_type") == expected_exception for item in failures
+        ),
+        "evidence_paths": sorted(
+            {
+                path
+                for item in failures
+                for path in [
+                    evidence.get("relative_path")
+                    for evidence in item.get("evidence", [])
+                ]
+                if path
+            }
+        ),
         "report_status": report.status,
     }
 

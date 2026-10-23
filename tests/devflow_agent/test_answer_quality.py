@@ -10,7 +10,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from app.schema import AgentState
-
 from devflow_agent.answer_quality import (
     build_numeric_correction_prompt,
     evaluate_answer_quality,
@@ -36,9 +35,7 @@ class NumericValidationTests(unittest.TestCase):
         self.assertAlmostEqual(evaluate_numeric_expression("0.1 + 0.2"), 0.3)
 
     def test_claims_detect_mismatch_tolerance_and_unverifiable_cases(self) -> None:
-        wrong = evaluate_arithmetic_claims(
-            "sum([-100, 50, -200]) returns -350"
-        )
+        wrong = evaluate_arithmetic_claims("sum([-100, 50, -200]) returns -350")
         self.assertEqual(wrong["status"], "NUMERIC_MISMATCH")
         self.assertEqual(wrong["claims"][0]["actual_value"], -250)
         self.assertEqual(
@@ -111,10 +108,14 @@ class QualityStateTests(unittest.TestCase):
         citation_errors: tuple[str, ...] = (),
         numeric_answer: str | None = None,
     ) -> dict:
-        numeric = evaluate_arithmetic_claims(answer if numeric_answer is None else numeric_answer)
+        numeric = evaluate_arithmetic_claims(
+            answer if numeric_answer is None else numeric_answer
+        )
         citation = {
             "valid": citation_valid,
-            "citations": [{"relative_path": "src/totals.py", "start_line": 1, "end_line": 2}]
+            "citations": [
+                {"relative_path": "src/totals.py", "start_line": 1, "end_line": 2}
+            ]
             if citation_valid or citation_errors
             else [],
             "errors": list(citation_errors),
@@ -129,19 +130,25 @@ class QualityStateTests(unittest.TestCase):
             numeric_check=numeric,
         )
 
-    def test_statuses_separate_execution_evidence_citation_and_numeric_quality(self) -> None:
+    def test_statuses_separate_execution_evidence_citation_and_numeric_quality(
+        self,
+    ) -> None:
         self.assertEqual(self._evaluate()["status"], "PASS")
         self.assertEqual(
             self._evaluate(numeric_answer="sum([-100,50,-200]) returns -350")["status"],
             "NUMERIC_MISMATCH",
         )
         self.assertEqual(
-            self._evaluate(citation_valid=False, citation_errors=("citation_outside_read_range",))["status"],
+            self._evaluate(
+                citation_valid=False, citation_errors=("citation_outside_read_range",)
+            )["status"],
             "INVALID_CITATION",
         )
         self.assertEqual(self._evaluate(read_count=0)["status"], "MISSING_EVIDENCE")
         self.assertEqual(
-            self._evaluate(run_status="failed", terminal_reason="provider_error")["status"],
+            self._evaluate(run_status="failed", terminal_reason="provider_error")[
+                "status"
+            ],
             "MODEL_OR_TOOL_FAILURE",
         )
         self.assertEqual(
@@ -152,7 +159,9 @@ class QualityStateTests(unittest.TestCase):
     def test_pass_scope_does_not_claim_natural_language_entailment(self) -> None:
         result = self._evaluate()
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(result["components"]["semantic_entailment"], "NOT_AUTOMATICALLY_VERIFIED")
+        self.assertEqual(
+            result["components"]["semantic_entailment"], "NOT_AUTOMATICALLY_VERIFIED"
+        )
         self.assertIn("does not prove", result["scope_note"])
 
 
@@ -178,7 +187,9 @@ class CitationFreshnessTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="devflow-m15-citation-") as temporary:
             root = Path(temporary)
             (root / "src").mkdir()
-            (root / "src" / "totals.py").write_text("def total(x):\n    return sum(x)\n", encoding="utf-8")
+            (root / "src" / "totals.py").write_text(
+                "def total(x):\n    return sum(x)\n", encoding="utf-8"
+            )
             workspace = AuthorizedWorkspace(root)
             evidence = self._evidence(workspace)
             checked = validate_answer_citations(
@@ -193,7 +204,9 @@ class CitationFreshnessTests(unittest.TestCase):
             )
 
     def test_markdown_and_plain_citation_forms_are_equivalent(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="devflow-m15-citation-forms-") as temporary:
+        with tempfile.TemporaryDirectory(
+            prefix="devflow-m15-citation-forms-"
+        ) as temporary:
             root = Path(temporary)
             (root / "src").mkdir()
             (root / "src" / "totals.py").write_text(
@@ -215,7 +228,9 @@ class CitationFreshnessTests(unittest.TestCase):
                         workspace=workspace,
                     )
                     self.assertTrue(checked["valid"], checked)
-                    self.assertEqual(checked["citations"][0]["relative_path"], "src/totals.py")
+                    self.assertEqual(
+                        checked["citations"][0]["relative_path"], "src/totals.py"
+                    )
 
     def test_modified_file_invalidates_previously_read_citation(self) -> None:
         with tempfile.TemporaryDirectory(prefix="devflow-m15-stale-") as temporary:
@@ -291,7 +306,9 @@ class BoundedCorrectionTests(unittest.TestCase):
         self.assertEqual(agent.step_calls, 2)
         self.assertEqual(agent.current_step, 2)
         self.assertEqual(agent.state, AgentState.IDLE)
-        self.assertEqual(agent.messages[-1], ("user", "recompute the verified mismatch"))
+        self.assertEqual(
+            agent.messages[-1], ("user", "recompute the verified mismatch")
+        )
         over_budget_agent = FakeAgent()
         over_budget = asyncio.run(
             _run_bounded_agent_correction(
@@ -306,7 +323,11 @@ class FixedEvaluationSetTests(unittest.TestCase):
     def test_all_fixed_cases_match_expected_status(self) -> None:
         root = Path(__file__).resolve().parents[2]
         cases_path = root / "evals" / "m1_5_answer_quality.jsonl"
-        cases = [json.loads(line) for line in cases_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        cases = [
+            json.loads(line)
+            for line in cases_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
         self.assertEqual(len(cases), 10)
         identifiers = [case["id"] for case in cases]
         self.assertEqual(len(identifiers), len(set(identifiers)))
@@ -341,7 +362,9 @@ class IntegratedCorrectionTests(unittest.TestCase):
                 return "synthetic initial response"
 
             def update_memory(self, role: str, content: str) -> None:
-                self.messages.append(SimpleNamespace(role=role, content=content, tool_calls=[]))
+                self.messages.append(
+                    SimpleNamespace(role=role, content=content, tool_calls=[])
+                )
 
             @asynccontextmanager
             async def state_context(self, new_state: AgentState):
@@ -355,7 +378,9 @@ class IntegratedCorrectionTests(unittest.TestCase):
             async def step(self) -> str:
                 self.model_calls_seen += 1
                 self.messages.append(
-                    SimpleNamespace(role="assistant", content=self.corrected_answer, tool_calls=[])
+                    SimpleNamespace(
+                        role="assistant", content=self.corrected_answer, tool_calls=[]
+                    )
                 )
                 self.terminal_reason = "final_answer"
                 self.state = AgentState.FINISHED
@@ -394,7 +419,13 @@ class IntegratedCorrectionTests(unittest.TestCase):
                             id=call_id,
                             function=SimpleNamespace(
                                 name="repository_readonly_read",
-                                arguments=json.dumps({"path": "src/totals.py", "start_line": 1, "end_line": 2}),
+                                arguments=json.dumps(
+                                    {
+                                        "path": "src/totals.py",
+                                        "start_line": 1,
+                                        "end_line": 2,
+                                    }
+                                ),
                             ),
                         )
                     ],
@@ -424,10 +455,18 @@ class IntegratedCorrectionTests(unittest.TestCase):
             client = SimpleNamespace(close=AsyncMock())
             http_client = SimpleNamespace(aclose=AsyncMock())
             with (
-                patch("devflow_agent.real_readonly_agent.load_local_model_profile", return_value=profile),
+                patch(
+                    "devflow_agent.real_readonly_agent.load_local_model_profile",
+                    return_value=profile,
+                ),
                 patch("devflow_agent.real_readonly_agent.probe_loopback_endpoint"),
-                patch("devflow_agent.real_readonly_agent.bind_single_attempt_model_call"),
-                patch("devflow_agent.openmanus_agent.create_readonly_repository_agent", return_value=agent),
+                patch(
+                    "devflow_agent.real_readonly_agent.bind_single_attempt_model_call"
+                ),
+                patch(
+                    "devflow_agent.openmanus_agent.create_readonly_repository_agent",
+                    return_value=agent,
+                ),
                 patch("httpx.AsyncClient", return_value=http_client),
                 patch("openai.AsyncOpenAI", return_value=client),
             ):
@@ -445,8 +484,13 @@ class IntegratedCorrectionTests(unittest.TestCase):
             "The signed total is -250 because sum([-100, 50, -200]) returns -250. See src/totals.py:1-2."
         )
         self.assertEqual(corrected["quality_correction"]["attempts"], 1)
-        self.assertEqual(corrected["quality_correction"]["initial_quality_status"], "NUMERIC_MISMATCH")
-        self.assertEqual(corrected["quality_correction"]["final_quality_status"], "PASS")
+        self.assertEqual(
+            corrected["quality_correction"]["initial_quality_status"],
+            "NUMERIC_MISMATCH",
+        )
+        self.assertEqual(
+            corrected["quality_correction"]["final_quality_status"], "PASS"
+        )
         self.assertEqual(corrected["status"], "verified")
         self.assertEqual(corrected["model_calls"], 4)
         self.assertEqual(corrected["quality_correction"]["initial_agent_steps"], 4)

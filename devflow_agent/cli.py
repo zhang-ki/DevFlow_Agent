@@ -10,9 +10,9 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from .repository import AuthorizedWorkspace, RepoError, RepoErrorCode, build_index
-from .real_readonly_agent import ReadonlyAgentError, run_local_readonly_question
 from .diagnostics import MAX_LOG_CHARS, diagnose_failures
+from .real_readonly_agent import ReadonlyAgentError, run_local_readonly_question
+from .repository import AuthorizedWorkspace, RepoError, RepoErrorCode, build_index
 
 
 def _positive_int(value: str) -> int:
@@ -47,34 +47,74 @@ def _make_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    index_parser = subparsers.add_parser("index", help="build an in-memory path and Python symbol index")
-    index_parser.add_argument("--repo", required=True, help="explicit authorized repository root")
-    index_parser.add_argument("--limit", type=_positive_int, default=50, help="maximum listed paths (default: 50)")
+    index_parser = subparsers.add_parser(
+        "index", help="build an in-memory path and Python symbol index"
+    )
+    index_parser.add_argument(
+        "--repo", required=True, help="explicit authorized repository root"
+    )
+    index_parser.add_argument(
+        "--limit",
+        type=_positive_int,
+        default=50,
+        help="maximum listed paths (default: 50)",
+    )
 
-    search_parser = subparsers.add_parser("search", help="search source keywords, paths, and Python symbols")
-    search_parser.add_argument("--repo", required=True, help="explicit authorized repository root")
+    search_parser = subparsers.add_parser(
+        "search", help="search source keywords, paths, and Python symbols"
+    )
+    search_parser.add_argument(
+        "--repo", required=True, help="explicit authorized repository root"
+    )
     search_parser.add_argument("--query", required=True, help="keyword or symbol text")
-    search_parser.add_argument("--path", dest="path_filter", help="relative path substring filter")
-    search_parser.add_argument("--symbol", dest="symbol_filter", help="Python qualified-symbol substring filter")
-    search_parser.add_argument("--limit", type=_positive_int, default=10, help="maximum results (default: 10)")
+    search_parser.add_argument(
+        "--path", dest="path_filter", help="relative path substring filter"
+    )
+    search_parser.add_argument(
+        "--symbol",
+        dest="symbol_filter",
+        help="Python qualified-symbol substring filter",
+    )
+    search_parser.add_argument(
+        "--limit", type=_positive_int, default=10, help="maximum results (default: 10)"
+    )
 
     read_parser = subparsers.add_parser(
         "read",
         help="read an explicit line range or a bounded default preview from a supported text file",
     )
-    read_parser.add_argument("--repo", required=True, help="explicit authorized repository root")
-    read_parser.add_argument("--path", required=True, help="workspace-relative file path")
+    read_parser.add_argument(
+        "--repo", required=True, help="explicit authorized repository root"
+    )
+    read_parser.add_argument(
+        "--path", required=True, help="workspace-relative file path"
+    )
     read_parser.add_argument("--start-line", type=_positive_int, default=1)
     read_parser.add_argument("--end-line", type=_positive_int)
-    read_parser.add_argument("--expected-sha256", help="reject a candidate if its indexed file version changed")
+    read_parser.add_argument(
+        "--expected-sha256",
+        help="reject a candidate if its indexed file version changed",
+    )
 
     ask_parser = subparsers.add_parser(
         "ask", help="ask a bounded real local model to search and read this repository"
     )
-    ask_parser.add_argument("--repo", required=True, help="explicit authorized repository root")
+    ask_parser.add_argument(
+        "--repo", required=True, help="explicit authorized repository root"
+    )
     ask_parser.add_argument("--question", required=True, help="repository question")
-    ask_parser.add_argument("--max-steps", type=_positive_int, default=6, help="maximum model decisions (1-12)")
-    ask_parser.add_argument("--timeout-seconds", type=_positive_int, default=180, help="whole-run timeout (1-300 seconds)")
+    ask_parser.add_argument(
+        "--max-steps",
+        type=_positive_int,
+        default=6,
+        help="maximum model decisions (1-12)",
+    )
+    ask_parser.add_argument(
+        "--timeout-seconds",
+        type=_positive_int,
+        default=180,
+        help="whole-run timeout (1-300 seconds)",
+    )
     ask_parser.add_argument(
         "--max-output-tokens",
         type=_positive_int,
@@ -82,12 +122,23 @@ def _make_parser() -> argparse.ArgumentParser:
     )
 
     diagnose_parser = subparsers.add_parser(
-        "diagnose", help="diagnose an already captured pytest log using read-only repository evidence"
+        "diagnose",
+        help="diagnose an already captured pytest log using read-only repository evidence",
     )
-    diagnose_parser.add_argument("--repo", required=True, help="explicit authorized repository root")
-    diagnose_parser.add_argument("--log", required=True, help="path to an existing pytest log; commands in it are never run")
-    diagnose_parser.add_argument("--exit-code", type=int, help="pytest exit code captured with the log")
-    diagnose_parser.add_argument("--format", choices=("json", "markdown"), default="json")
+    diagnose_parser.add_argument(
+        "--repo", required=True, help="explicit authorized repository root"
+    )
+    diagnose_parser.add_argument(
+        "--log",
+        required=True,
+        help="path to an existing pytest log; commands in it are never run",
+    )
+    diagnose_parser.add_argument(
+        "--exit-code", type=int, help="pytest exit code captured with the log"
+    )
+    diagnose_parser.add_argument(
+        "--format", choices=("json", "markdown"), default="json"
+    )
     diagnose_parser.add_argument(
         "--compact",
         action="store_true",
@@ -117,7 +168,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "diagnose":
             log_path = Path(args.log).expanduser().resolve(strict=True)
             if not log_path.is_file():
-                raise RepoError(RepoErrorCode.NOT_A_FILE, "diagnostic log is not a regular file")
+                raise RepoError(
+                    RepoErrorCode.NOT_A_FILE, "diagnostic log is not a regular file"
+                )
             if log_path.stat().st_size > MAX_LOG_CHARS * 4:
                 raise RepoError(
                     RepoErrorCode.FILE_TOO_LARGE,
@@ -127,7 +180,14 @@ def main(argv: list[str] | None = None) -> int:
             log_text = log_path.read_text(encoding="utf-8", errors="replace")
             report = diagnose_failures(workspace, log_text, exit_code=args.exit_code)
             if args.format == "markdown":
-                print((report.to_compact_markdown() if args.compact else report.to_markdown()), end="")
+                print(
+                    (
+                        report.to_compact_markdown()
+                        if args.compact
+                        else report.to_markdown()
+                    ),
+                    end="",
+                )
             else:
                 print(report.to_compact_json() if args.compact else report.to_json())
             return 0 if report.status == "PASS" else 3
@@ -182,10 +242,20 @@ def main(argv: list[str] | None = None) -> int:
         _emit(asdict(evidence), max_bytes=workspace.limits.max_return_bytes)
         return 0
     except RepoError as exc:
-        print(json.dumps(exc.as_dict(), ensure_ascii=False, sort_keys=True), file=sys.stderr)
+        print(
+            json.dumps(exc.as_dict(), ensure_ascii=False, sort_keys=True),
+            file=sys.stderr,
+        )
         return 2
     except ReadonlyAgentError as exc:
-        print(json.dumps({"status": "blocked", **exc.as_dict()}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+        print(
+            json.dumps(
+                {"status": "blocked", **exc.as_dict()},
+                ensure_ascii=False,
+                sort_keys=True,
+            ),
+            file=sys.stderr,
+        )
         return 3
 
 

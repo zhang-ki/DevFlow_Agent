@@ -16,7 +16,8 @@ from .repository import AuthorizedWorkspace, RepoError, RepoErrorCode, build_ind
 class ToolRegistrar(Protocol):
     tools: tuple[Any, ...]
 
-    def add_tools(self, *tools: Any) -> Any: ...
+    def add_tools(self, *tools: Any) -> Any:
+        ...
 
 
 class _ReadOnlyTool:

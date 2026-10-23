@@ -9,6 +9,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from devflow_agent.answer_quality import (
@@ -60,7 +61,9 @@ def main() -> int:
             citation_check=citation,
             numeric_check=numeric,
         )
-        disk_hash = workspace.read_text(source.relative_to(root).as_posix()).full_file_sha256
+        disk_hash = workspace.read_text(
+            source.relative_to(root).as_posix()
+        ).full_file_sha256
     result = {
         "kind": "offline_recheck_of_preserved_real_model_answer",
         "run_id": RUN_ID,
@@ -75,7 +78,10 @@ def main() -> int:
         "model_restarted": False,
     }
     output = run_dir / "offline-quality-recheck.json"
-    output.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output.write_text(
+        json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0 if quality["status"] == "PASS" else 3
 

@@ -9,9 +9,13 @@ import sys
 import tempfile
 from pathlib import Path
 
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from devflow_agent.answer_quality import evaluate_answer_quality, evaluate_arithmetic_claims
+from devflow_agent.answer_quality import (
+    evaluate_answer_quality,
+    evaluate_arithmetic_claims,
+)
 from devflow_agent.real_readonly_agent import validate_answer_citations
 from devflow_agent.repository import AuthorizedWorkspace
 
@@ -21,7 +25,9 @@ def main() -> int:
     run_id = "20261023T-m2-qwen35-4b-r6-ctx4096"
     run_dir = project / "reports" / "m2_real_model_runs" / run_id
     raw = json.loads((run_dir / "ask.stdout.json").read_text(encoding="utf-8"))
-    run_record = json.loads((run_dir / "m2-real-model-run.json").read_text(encoding="utf-8"))
+    run_record = json.loads(
+        (run_dir / "m2-real-model-run.json").read_text(encoding="utf-8")
+    )
     answer = raw.get("answer", "")
     raw_reads = [
         item["result"]
@@ -67,7 +73,9 @@ def main() -> int:
             numeric_check=numeric,
         )
         disk_hashes = {
-            read["relative_path"]: workspace.read_text(read["relative_path"]).full_file_sha256
+            read["relative_path"]: workspace.read_text(
+                read["relative_path"]
+            ).full_file_sha256
             for read in derived_reads
         }
     result = {
@@ -88,7 +96,10 @@ def main() -> int:
         "model_restarted": False,
     }
     output = run_dir / "offline-quality-reassessment-static-numeric.json"
-    output.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output.write_text(
+        json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0 if quality["status"] == "PASS" else 3
 

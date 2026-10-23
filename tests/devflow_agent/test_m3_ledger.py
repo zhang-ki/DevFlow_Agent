@@ -6,7 +6,11 @@ import unittest
 from pathlib import Path
 from shutil import copytree
 
-from devflow_agent.patch_ledger import PatchLedger, PatchLedgerError, run_isolated_pytest
+from devflow_agent.patch_ledger import (
+    PatchLedger,
+    PatchLedgerError,
+    run_isolated_pytest,
+)
 from devflow_agent.patches import create_patch_proposal
 from devflow_agent.repository import AuthorizedWorkspace
 
@@ -62,21 +66,37 @@ class PersistentPatchLedgerTests(unittest.TestCase):
         )
         self.assertEqual(decision.decision, "APPROVED")
         self.assertEqual(receipt.write_count, 1)
-        self.assertEqual(hashlib.sha256(self.file.read_bytes()).hexdigest(), self.original_sha)
-        self.assertEqual((isolated / "src" / "totals.py").read_text(encoding="utf-8").splitlines()[1], "    return sum(values)")
+        self.assertEqual(
+            hashlib.sha256(self.file.read_bytes()).hexdigest(), self.original_sha
+        )
+        self.assertEqual(
+            (isolated / "src" / "totals.py")
+            .read_text(encoding="utf-8")
+            .splitlines()[1],
+            "    return sum(values)",
+        )
         with self.assertRaises(PatchLedgerError):
-            reloaded.apply_approved(loaded_again, decision_again, source_workspace=self.workspace, destination_root=isolated)
+            reloaded.apply_approved(
+                loaded_again,
+                decision_again,
+                source_workspace=self.workspace,
+                destination_root=isolated,
+            )
         snapshot = reloaded.snapshot()
         self.assertEqual(snapshot["proposals"][0]["status"], "APPLIED")
         self.assertEqual(snapshot["proposals"][0]["consumed"], 1)
         self.assertEqual(len(snapshot["receipts"]), 1)
-        self.assertTrue(any(event["event_type"] == "APPLIED" for event in snapshot["events"]))
+        self.assertTrue(
+            any(event["event_type"] == "APPLIED" for event in snapshot["events"])
+        )
 
     def test_persistence_failure_is_fail_closed(self) -> None:
         ledger = PatchLedger(self.ledger_path)
         proposal = self._proposal()
         original_connect = ledger._connect
-        ledger._connect = lambda: (_ for _ in ()).throw(__import__("sqlite3").OperationalError("locked"))
+        ledger._connect = lambda: (_ for _ in ()).throw(
+            __import__("sqlite3").OperationalError("locked")
+        )
         with self.assertRaises(PatchLedgerError) as raised:
             ledger.record_proposal(proposal)
         self.assertEqual(raised.exception.code, "persistence_error")
@@ -85,7 +105,13 @@ class PersistentPatchLedgerTests(unittest.TestCase):
     def test_test_results_are_bounded_and_persisted(self) -> None:
         ledger = PatchLedger(self.ledger_path)
         record_id = ledger.record_test_result(
-            {"status": "failed", "exit_code": 1, "stdout_tail": "x" * 9000, "stderr_tail": "", "elapsed_seconds": 1.2},
+            {
+                "status": "failed",
+                "exit_code": 1,
+                "stdout_tail": "x" * 9000,
+                "stderr_tail": "",
+                "elapsed_seconds": 1.2,
+            },
             phase="baseline",
         )
         snapshot = ledger.snapshot()
@@ -100,14 +126,22 @@ class IsolatedPytestRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="devflow-m3-runner-") as temp:
             root = Path(temp) / "source"
             (root / "tests").mkdir(parents=True)
-            (root / "tests" / "test_ok.py").write_text("def test_ok():\n    assert 1 + 1 == 2\n", encoding="utf-8")
-            passed = run_isolated_pytest(root, destination_root=Path(temp) / "pass-copy", timeout_seconds=30)
+            (root / "tests" / "test_ok.py").write_text(
+                "def test_ok():\n    assert 1 + 1 == 2\n", encoding="utf-8"
+            )
+            passed = run_isolated_pytest(
+                root, destination_root=Path(temp) / "pass-copy", timeout_seconds=30
+            )
             self.assertEqual(passed["status"], "passed")
             self.assertEqual(passed["exit_code"], 0)
             slow = Path(temp) / "slow-source"
             (slow / "tests").mkdir(parents=True)
-            (slow / "tests" / "test_slow.py").write_text("import time\ndef test_slow():\n    time.sleep(2)\n", encoding="utf-8")
-            timed_out = run_isolated_pytest(slow, destination_root=Path(temp) / "timeout-copy", timeout_seconds=0.2)
+            (slow / "tests" / "test_slow.py").write_text(
+                "import time\ndef test_slow():\n    time.sleep(2)\n", encoding="utf-8"
+            )
+            timed_out = run_isolated_pytest(
+                slow, destination_root=Path(temp) / "timeout-copy", timeout_seconds=0.2
+            )
             self.assertEqual(timed_out["status"], "timeout")
             self.assertIsNone(timed_out["exit_code"])
             self.assertFalse(timed_out["cleanup"].get("remaining_parent", False))
