@@ -26,8 +26,8 @@ DevFlow Agent 采用 Python 单进程 CLI 作为首个可用界面，复用 Open
 | 仓库只读层 | devflow_agent/repository/snapshot.py、indexer.py、search.py、evidence.py | 建立快照、检索文件和代码证据、验证路径/行号/内容 hash |
 | Agent 角色 | devflow_agent/agents/repo_qa.py、ci_diagnoser.py、repair_worker.py、reviewer.py | 各角色只返回有 schema 的产物；Agent 不直接决定权限 |
 | 安全与执行 | devflow_agent/safety/policy.py、patch_preview.py、workspace.py、sandbox_runner.py | 路径白名单、差异预览、审批状态、隔离测试执行和清理 |
-| 审计与恢复 | devflow_agent/persistence/event_store.py、session_store.py | M5 加入 SQLite 事件记录、状态快照和恢复 |
-| API/界面 | devflow_agent/api/app.py、routes/jobs.py、routes/events.py | M5 再加入 FastAPI 与 SSE；CLI 是 MVP 的首个交互方式 |
+| 审计与恢复 | devflow_agent/persistence/event_store.py、session_store.py | 后续候选：SQLite 状态快照与崩溃恢复 |
+| API/界面 | devflow_agent/api/app.py、routes/jobs.py、routes/events.py | 后续候选：FastAPI/SSE；CLI 仍是当前交互方式 |
 | 评测 | tests/fixtures/repos/、evals/cases/、evals/runner.py | 固定故障仓库、金标证据、基线和消融结果 |
 
 ### 数据流
@@ -86,7 +86,7 @@ M0 只选一个可用的 OpenAI-compatible API 配置来验证工具调用；不
 
 ### 3.6 存储与交互
 
-M0-M3 不需要服务端数据库。M3 可写追加式 JSONL 审计记录。M5 才加入 SQLite 会话与事件表，先用 Python 标准库 sqlite3；当迁移、并发写入或复杂查询确实需要时再考虑 SQLAlchemy。M5 才评估 FastAPI/SSE 和 React/Next.js。前端不能代替审批状态机或服务端路径校验。
+M0-M3 不需要服务端数据库。M3/M4 已使用 Python 标准库 sqlite3 持久化补丁审批与一次性收据；完整会话快照、崩溃恢复、FastAPI/SSE 和 React/Next.js 仍是后续候选。前端不能代替审批状态机或服务端路径校验。
 
 ## 4. 技术选型与替代成本
 
@@ -96,11 +96,11 @@ M0-M3 不需要服务端数据库。M3 可写追加式 JSONL 审计记录。M5 �
 | OpenManus Agent/LLM/tool-call | 选择性复用 | 避免重写基础循环和 provider 调用；复用前修正生命周期、可选依赖和权限边界。 |
 | LangGraph | 暂不加入 | 增加另一套状态和检查点抽象；MVP 状态机边界很小，现阶段难以证明其增益。若 M4/M5 出现复杂分支或人类暂停恢复，再做小型对照。 |
 | 代码检索 | 精确路径/标识符 + 词项/结构检索 | 不需要向量服务和额外模型；以金标 top-k 与引用准确性决定是否升级。 |
-| FastAPI + SSE | M5 再加入 | 初版用 CLI 输出运行事件，避免 Web 服务生命周期和认证扩大 M0/M3 范围。 |
-| SQLite / SQLAlchemy | M5 先 SQLite 标准库 | 单机个人项目数据量有限；SQLAlchemy 可在迁移/并发需要后增加。 |
+| FastAPI + SSE | 后续再评估 | 初版用 CLI 输出运行事件，避免 Web 服务生命周期和认证扩大当前范围。 |
+| SQLite / SQLAlchemy | 已使用 sqlite3；SQLAlchemy 暂不加入 | 单机补丁账本使用标准库；迁移/并发需要明确后再增加 ORM。 |
 | MCP | 可选扩展 | 源码已有客户端；只启用明确配置的只读 server 和工具。MVP 核心测试不依赖 MCP。 |
 | Docker | M3 必须验证；重做安全配置 | 上游已有生命周期和资源限制，但 privileged/root 和默认关闭沙箱不满足安全修复场景。 |
-| React/Next.js | M5 视演示价值决定 | 用户要求有可演示界面最终可选；前端排在核心闭环之后。 |
+| React/Next.js | 后续视演示价值决定 | 前端排在核心闭环之后。 |
 | 本地大模型 | 暂不下载 | 本轮和 M0 都不下载权重；使用已有端点或按需付费 API，记录真实成本。 |
 
 ## 5. 新模块最小集合
@@ -113,7 +113,7 @@ MVP 实现顺序建议为：
 4. devflow_agent/agents/repo_qa.py、ci_diagnoser.py：先只读回答和 CI 诊断。
 5. devflow_agent/safety/policy.py、patch_preview.py、sandbox_runner.py：审批前不写入，审批后只改隔离副本。
 6. devflow_agent/audit.py：JSONL 记录并可由测试重放。
-7. M5 再增加 persistence、API 和 UI 模块。
+7. 后续按实际价值评估完整 persistence、API 和 UI 模块。
 
 MVP 的合成仓库放在 tests/fixtures/repos/broken_python_project/；评测案例放在 evals/cases/。这些路径当前尚不存在。
 
@@ -145,3 +145,9 @@ MVP 的合成仓库放在 tests/fixtures/repos/broken_python_project/；评测�
 M4 落地为 `devflow_agent/repair_workflow.py` 的单运行状态机。它复用 `diagnostics.py`、`patches.py`、`patch_ledger.py` 和 `run_isolated_pytest`，通过 `run_id`、`task_id`、proposal/patch SHA-256、SQLite 事件及脱敏 JSON 报告把诊断、审批和验证绑定起来。审批前只生成 Diff；批准后只向新的合成副本应用一次，源工作区必须保持哈希不变。`RepairWorkflow.replay_report` 以只读方式核验事件序列、状态映射、审批、哈希、测试收据、证据和清理证明，并明确返回 `write_replayed=false`；篡改或不完整的 VERIFIED 报告会被拒绝。
 
 这一决策保持 M1–M3 的工具白名单和 fail-closed 语义，避免为 M4 引入多 Agent、向量库、Docker 或新的持久化系统。合成演示控制流已验证；模型自主补丁、真实用户仓库写入、OS 级沙箱和失败后自主重规划仍未验证。
+
+## 8. M5 决策：在 M4 之上组合独立尝试，不复用补丁授权
+
+M5 使用 `devflow_agent/bounded_replanning.py` 编排多个完整 M4 尝试，不修改 M4 的单次修复状态机。默认最多一次重规划。一次验证失败只有在产生新的结构化 pytest 证据、候选显式绑定该证据且仍有预算时才能进入下一次规划；相同失败、相同候选、缺失证据或越权路径立即停止。
+
+每次尝试使用新的 `run_id`、proposal、审批和 SQLite 账本。M5 不跨尝试复用批准或收据，因为 M4 回放合同要求一份 VERIFIED 报告只对应一个精确补丁和一个写入收据。顶层 M5 报告保存尝试报告的相对路径与 SHA-256，并只读回放所有嵌套 M4 报告。该设计验证了确定性的有界重规划控制面；真实模型补丁生成、真实仓库写入、崩溃恢复和 OS 级沙箱仍未验证。

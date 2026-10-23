@@ -1,5 +1,15 @@
 """Read-only local repository analysis primitives."""
 
+from .bounded_replanning import (
+    ApprovalInstruction,
+    BoundedReplanningWorkflow,
+    FailureEvidence,
+    RepairCandidate,
+    ReplanContext,
+    ReplanError,
+    ReplanLimits,
+    ReplanState,
+)
 from .patch_ledger import PatchLedger, PatchLedgerError, run_isolated_pytest
 from .patches import (
     ApprovalDecision,
@@ -57,4 +67,12 @@ __all__ = [
     "WorkflowError",
     "WorkflowLimits",
     "WorkflowState",
+    "ApprovalInstruction",
+    "BoundedReplanningWorkflow",
+    "FailureEvidence",
+    "RepairCandidate",
+    "ReplanContext",
+    "ReplanError",
+    "ReplanLimits",
+    "ReplanState",
 ]

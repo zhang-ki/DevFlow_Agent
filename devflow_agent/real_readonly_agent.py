@@ -22,6 +22,7 @@ from .answer_quality import (
     build_numeric_correction_prompt,
     evaluate_answer_quality,
     evaluate_arithmetic_claims,
+    evaluate_pytest_diagnostic_evidence,
     extract_expected_numeric_claims,
 )
 from .openmanus_tools import ALLOWED_TOOL_NAMES
@@ -781,6 +782,9 @@ async def run_local_readonly_question(
             expected_claims=expected_numeric_claims,
             trusted_reads=(),
         )
+        diagnostic_check = evaluate_pytest_diagnostic_evidence(
+            question, "", (), citation_check
+        )
         quality = evaluate_answer_quality(
             answer="",
             run_status="failed",
@@ -789,6 +793,7 @@ async def run_local_readonly_question(
             read_evidence_count=0,
             citation_check=citation_check,
             numeric_check=numeric_check,
+            diagnostic_check=diagnostic_check,
         )
         return {
             "kind": "real_local_readonly_agent_run",
@@ -802,6 +807,7 @@ async def run_local_readonly_question(
             "tool_trace": [],
             "read_evidence_count": 0,
             "citations": citation_check,
+            "diagnostic_check": diagnostic_check,
             "answer_quality": quality,
             "quality_correction": {
                 "limit": 1,
@@ -830,6 +836,9 @@ async def run_local_readonly_question(
         expected_claims=expected_numeric_claims,
         trusted_reads=reads,
     )
+    diagnostic_check = evaluate_pytest_diagnostic_evidence(
+        question, answer, reads, citation_check
+    )
     quality = evaluate_answer_quality(
         answer=answer,
         run_status=run_status,
@@ -838,6 +847,7 @@ async def run_local_readonly_question(
         read_evidence_count=len(reads),
         citation_check=citation_check,
         numeric_check=numeric_check,
+        diagnostic_check=diagnostic_check,
     )
     initial_quality = quality
     initial_model_calls = getattr(agent, "model_calls_seen", 0)
@@ -901,6 +911,9 @@ async def run_local_readonly_question(
             expected_claims=expected_numeric_claims,
             trusted_reads=reads,
         )
+        diagnostic_check = evaluate_pytest_diagnostic_evidence(
+            question, answer, reads, citation_check
+        )
         quality = evaluate_answer_quality(
             answer=answer,
             run_status=run_status,
@@ -909,6 +922,7 @@ async def run_local_readonly_question(
             read_evidence_count=len(reads),
             citation_check=citation_check,
             numeric_check=numeric_check,
+            diagnostic_check=diagnostic_check,
         )
         correction["initial_quality_status"] = initial_quality["status"]
         correction["final_quality_status"] = quality["status"]
@@ -944,6 +958,7 @@ async def run_local_readonly_question(
         "tool_trace_issues": trace_issues,
         "read_evidence_count": len(reads),
         "citations": citation_check,
+        "diagnostic_check": diagnostic_check,
         "answer_quality": quality,
         "answer": answer,
     }

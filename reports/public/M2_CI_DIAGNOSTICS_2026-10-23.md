@@ -80,3 +80,58 @@ The new deterministic regression ran **8 tests, 8 passed, 0 failed, 0 skipped**,
 The preserved answer from `20261023T-m2-qwen35-4b-r6-ctx4096` was re-evaluated offline by [`scripts/recheck_m2_saved_answer.py`](../../scripts/recheck_m2_saved_answer.py). Citation validation remains `PASS`; the numeric result remains `UNVERIFIABLE` because the cited line says the test *expects* `total([-1, 1]) == 1`, which is not treated as a runtime behavior claim. The new result is saved at [`reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r6-ctx4096/offline-quality-reassessment-static-numeric.json`](../m2_real_model_runs/20261023T-m2-qwen35-4b-r6-ctx4096/offline-quality-reassessment-static-numeric.json). The original model output, tool trace, and historical exit status were not modified; no model was restarted.
 
 M2 remains **PARTIAL / NOT_VERIFIED**.
+
+## 2026-10-24 follow-up
+
+M2 remains **PARTIAL / NOT_VERIFIED**. Offline re-evaluation of the preserved Qwen run confirms that source/test citations pass, but diagnostic quality remains `UNVERIFIABLE`: the answer did not include the observed pytest actual/expected result, and the test expectation alone is not treated as runtime evidence. Historical run artifacts were not changed.
+
+The focused M2 suite passed 59/59; the full isolated deterministic suite passed 126/128 with 2 skipped and 0 failed. Pre-commit, compile, PowerShell syntax, and diff checks passed. One fresh attempt (`20261024T-m2-qwen35-4b-r7-diagnostic-evidence`) was blocked during model-config preflight after the runtime version check. The model server and health/model requests were not run, and the underlying transient preflight cause remains unresolved. No new real-model diagnosis was produced.
+
+## Final preflight hardening and bounded follow-up
+
+The former runner used an inline `python -c` probe and converted every nonzero
+result to `model_config_preflight_failed` without retaining stderr or a safe
+exception record. That observability defect is confirmed; the exact transient
+exception in the historical r7 run is not recoverable from its saved evidence.
+The runner now calls a dedicated profile-preflight mode. Its record is limited
+to stage, status, exception type, stable error code, sanitized diagnostic, and
+allow-listed non-secret profile fields. It never copies an unexpected exception
+message or traceback. Deterministic success, missing-config, malformed-TOML,
+and unexpected-exception paths pass, and the actual read-only profile preflight
+passed for `devflow-qwen35-4b` at the loopback endpoint.
+
+The only permitted follow-up, run
+`20261024T013100Z-m2-qwen35-4b-r8-preflight-fix`, passed the runtime version,
+runtime capability, model/runtime hashes, and model-profile preflight. It then
+stopped at `synthetic_pytest_baseline_did_not_match_expected_failure` before
+starting llama.cpp. The captured pytest result was a real expected failure and
+contained `E       assert 4 == 3`; the harness required the different text
+`AssertionError: assert 4 == 3`. Health, model identity, inference, and tool
+calls are therefore `NOT_RUN`; model calls are zero. Cleanup recorded zero
+remaining owned processes and no listener. The runner had not yet created its
+before-hash checkpoint, so this run cannot use its `fixture_unchanged` field as
+an immutability proof.
+
+M2 remains **PARTIAL / NOT_VERIFIED**. No retry was made. The next work, if the
+project is reopened, is the isolated correction and deterministic validation of
+that pytest-output matcher before any separately authorized model run.
+
+Final local verification after the preflight change: the focused M2 suite ran
+67 tests with 67 passes, 0 failures, and 0 skips (exit code 0). The complete
+private-config-free source snapshot ran 136 tests with 134 passes, 0 failures,
+and 2 host-capability skips (exit code 0). The skips are the existing link and
+junction creation cases. Python compilation, PowerShell parsing, public JSON
+parsing, `git diff --check`, and the final all-files pre-commit run all exited
+0. M3 approval/one-time consumption, M4 report replay, and M5 bounded-replan
+safety tests are included in that complete suite.
+
+The pytest matcher defect was then corrected offline without another model
+start. The helper now requires all four pieces of evidence: exit code 1, the
+exact expected test node ID, the expected observed assertion line, and the
+pytest failure summary. It accepts Windows path separators only after
+normalization, rejects logs outside the run directory, limits the log to 1 MiB,
+and records only booleans plus the log SHA-256. Four matcher tests cover the
+preserved Windows output, missing node ID, wrong exit/assertion, and path escape.
+The preserved r8 `baseline-pytest.log` now passes this read-only check. M2 still
+remains **PARTIAL / NOT_VERIFIED** because that historical run stopped before
+model startup and no further real-model run was made.

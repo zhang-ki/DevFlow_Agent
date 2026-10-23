@@ -396,5 +396,193 @@
     "task_b": "NOT_RUN",
     "commit_or_push": "NOT_PERFORMED"
   },
-  "next_gate": "M2 remains PARTIAL after the single bounded real run: preserve this evidence and resolve the diagnostic numeric-claim applicability offline before any future model run."
+  "next_gate": "M2 remains PARTIAL after the single bounded real run: preserve this evidence and resolve the diagnostic numeric-claim applicability offline before any future model run.",
+  "followup_2026_10_24": {
+    "date": "2026-10-24",
+    "stage": "M2",
+    "status": "PARTIAL",
+    "historical_run": {
+      "run_id": "20261023T-m2-qwen35-4b-r6-ctx4096",
+      "raw_ask_status": "failed",
+      "raw_ask_exit_code": null,
+      "outer_acceptance_exit_code": 1,
+      "raw_quality": {
+        "citation": "PASS",
+        "execution": "PASS",
+        "numeric": "UNVERIFIABLE"
+      },
+      "offline_reassessment": {
+        "artifact": "reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r6-ctx4096/offline-quality-reassessment-diagnostic-evidence-v3.json",
+        "citation": "PASS",
+        "numeric": "NOT_APPLICABLE",
+        "diagnostic": "UNVERIFIABLE",
+        "overall": "UNVERIFIABLE",
+        "reason": "answer_missing_structured_observed_result",
+        "raw_evidence_unchanged": true
+      }
+    },
+    "confirmed_quality_gate_findings": [
+      "The saved model answer read and cited implementation and test files, but did not read or cite the pytest failure log and did not provide the required structured observed actual/expected result.",
+      "A test expectation and static source behavior do not, by themselves, establish the runtime result; the quality gate correctly remains fail-closed.",
+      "The historical raw answer has no diagnostic_check field; the new offline v3 reassessment classifies diagnostic evidence as UNVERIFIABLE rather than rewriting that historical result."
+    ],
+    "implementation_changes": [
+      "Added bounded pytest diagnostic evidence classification requiring a trusted log, matching test assertion, simple statically verifiable source behavior, structured observed result, diagnosis class, and valid citations.",
+      "Updated the one-run M2 fixture and prompt to expose the pytest log as supported failure.txt and request a compact, evidence-linked observed result.",
+      "Preserved the read-only tool allowlist and fail-closed citation, hash, truncation, and evidence checks."
+    ],
+    "deterministic_validation": {
+      "focused_m2": {
+        "command": "python -m unittest tests.devflow_agent.test_m2_diagnostic_quality tests.devflow_agent.test_m2_numeric_applicability tests.devflow_agent.test_answer_quality tests.devflow_agent.test_real_readonly_agent tests.devflow_agent.test_m2_diagnostics tests.devflow_agent.test_m2_output_contract",
+        "run": 59,
+        "passed": 59,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0
+      },
+      "full_isolated_suite": {
+        "run": 128,
+        "passed": 126,
+        "failed": 0,
+        "skipped": 2,
+        "exit_code": 0,
+        "note": "Executed from a temporary source snapshot without private local config; no project files were removed or changed for the test."
+      },
+      "pre_commit_all_files_final": {
+        "exit_code": 0,
+        "note": "All configured hooks passed after the first run applied a Black formatting change."
+      },
+      "python_compile": {
+        "files": 33,
+        "exit_code": 0
+      },
+      "powershell_runner_parse": {
+        "status": "PASS",
+        "exit_code": 0
+      },
+      "git_diff_check": {
+        "exit_code": 0
+      },
+      "expected_synthetic_baseline_failure": {
+        "exit_code": 1,
+        "expected": true,
+        "observed_assertion": "assert 4 == 3"
+      }
+    },
+    "new_real_model_attempt": {
+      "run_id": "20261024T-m2-qwen35-4b-r7-diagnostic-evidence",
+      "status": "BLOCKED",
+      "model": "Qwen3.5-4B Q4_K_M",
+      "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+      "runtime": "llama.cpp b11424",
+      "runtime_sha256": "f8df891a5e4d10fa8cfc0f86c8d99617a06edd18d046e18b59ec3354f17fc12d",
+      "context_tokens": 4096,
+      "max_output_tokens": 1536,
+      "runtime_version_exit_code": 0,
+      "failure_stage": "model_config_preflight",
+      "recorded_error": "model_config_preflight_failed",
+      "underlying_cause": "UNRESOLVED: the run record did not capture the Python probe stderr or structured exception; the same read-only profile probe subsequently succeeded with the expected alias and loopback endpoint.",
+      "server_started": false,
+      "health_check": "NOT_RUN",
+      "model_identity_endpoint_check": "NOT_RUN",
+      "model_calls": 0,
+      "ask_exit_code": null,
+      "owned_processes": 0,
+      "remaining_owned_processes": 0,
+      "listener_after_cleanup": false,
+      "fixture_unchanged": true,
+      "raw_run_record": "reports/m2_real_model_runs/20261024T-m2-qwen35-4b-r7-diagnostic-evidence/m2-real-model-run.json"
+    },
+    "security": {
+      "model_endpoint_scope": "loopback only",
+      "tools": [
+        "repository search",
+        "trusted file read"
+      ],
+      "writes_enabled": false,
+      "task_b_run": false,
+      "external_api_calls": false,
+      "historical_evidence_modified": false
+    },
+    "next_minimum_action": "Improve the runner's sanitized profile-preflight diagnostics, then schedule a separately authorized single real-model attempt; do not reuse this blocked run as a pass."
+  },
+  "final_preflight_followup_2026_10_24": {
+    "status": "PARTIAL",
+    "m2_gate": "NOT_VERIFIED",
+    "confirmed_preflight_defect": "The former inline probe reduced every failure to model_config_preflight_failed and did not preserve a sanitized exception record; the historical transient exception is not recoverable.",
+    "preflight_fix": {
+      "implementation": "Dedicated profile mode with allow-listed fields and fail-closed redaction",
+      "deterministic_cases": [
+        "success",
+        "missing configuration",
+        "parse failure",
+        "unexpected exception"
+      ],
+      "actual_read_only_preflight": "PASS",
+      "model": "devflow-qwen35-4b",
+      "endpoint": "http://127.0.0.1:11434/v1"
+    },
+    "bounded_real_attempt": {
+      "run_id": "20261024T013100Z-m2-qwen35-4b-r8-preflight-fix",
+      "status": "BLOCKED",
+      "exit_code": 3,
+      "model_config_preflight": "PASS",
+      "failure_stage": "synthetic_pytest_baseline_check",
+      "error": "synthetic_pytest_baseline_did_not_match_expected_failure",
+      "observed_pytest_assertion": "E       assert 4 == 3",
+      "matcher_expected": "AssertionError: assert 4 == 3",
+      "server_started": false,
+      "health_check": "NOT_RUN",
+      "model_identity_check": "NOT_RUN",
+      "model_calls": 0,
+      "tool_calls": 0,
+      "remaining_owned_processes": 0,
+      "listener_after_cleanup": false,
+      "fixture_immutability": "NOT_VERIFIED because the before-hash checkpoint was not yet created"
+    },
+    "security": {
+      "private_config_published": false,
+      "model_started": false,
+      "external_api_called": false,
+      "writes_enabled": false,
+      "task_b_run": false,
+      "historical_evidence_modified": false
+    },
+    "final_validation": {
+      "focused_m2": {
+        "run": 67,
+        "passed": 67,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0
+      },
+      "full_isolated_suite": {
+        "run": 136,
+        "passed": 134,
+        "failed": 0,
+        "skipped": 2,
+        "exit_code": 0,
+        "note": "Executed from a temporary HEAD-plus-M2-diff snapshot without private config; the two skips are existing host link/junction capability checks."
+      },
+      "pre_commit_all_files": 0,
+      "python_compile": 0,
+      "powershell_parse_errors": 0,
+      "public_json_parse": 0,
+      "git_diff_check": 0
+    },
+    "offline_matcher_fix": {
+      "status": "PASS",
+      "preserved_r8_log_reassessment": "PASS",
+      "required_evidence": [
+        "pytest exit code 1",
+        "exact expected test node ID",
+        "observed assertion line",
+        "one-failed summary"
+      ],
+      "path_boundary": "Log must resolve within the run directory",
+      "size_limit_bytes": 1048576,
+      "new_real_model_run": false
+    },
+    "next_minimum_action": "M2 remains PARTIAL until a separately authorized real-model run completes the quality gate; no additional functionality is required for the accurately labeled archive snapshot."
+  }
 }

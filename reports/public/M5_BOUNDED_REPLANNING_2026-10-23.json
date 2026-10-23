@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "kind": "devflow_m5_acceptance_summary",
+  "date": "2026-10-23",
+  "status": "VERIFIED",
+  "scope": "deterministic_synthetic_control_flow",
+  "base_revision": "e02b8304ddaadd5c80625ab72b2c10d1353a4aae",
+  "run": {
+    "run_id": "20261023T-m5-bounded-r1",
+    "state": "COMPLETED",
+    "stop_reason": "verification_passed",
+    "attempt_count": 2,
+    "event_count": 9,
+    "attempts": [
+      {
+        "attempt_number": 1,
+        "run_id": "20261023T-m5-bounded-r1-attempt-01",
+        "state": "TEST_FAILED",
+        "baseline_exit_code": 1,
+        "post_apply_exit_code": 1,
+        "receipt_count": 1,
+        "patch_sha256": "6219b7b8e08406944d706ba93428034b366667770982c0e00d271c38cf623c6f",
+        "report_sha256": "021e1d1dfaa8a3683b157c5042147ef8fd04965db2d31fe4a2a603354dcef1f6"
+      },
+      {
+        "attempt_number": 2,
+        "run_id": "20261023T-m5-bounded-r1-attempt-02",
+        "state": "COMPLETED",
+        "baseline_exit_code": 1,
+        "post_apply_exit_code": 0,
+        "receipt_count": 1,
+        "patch_sha256": "43a301e784e124a60da901042b2e2b10b95a0ad99360e29803f34b0dd77b449d",
+        "report_sha256": "58d400262e9217953ed6498985c0027ec4dfe9646c140fa31c7c232f1f0004ec"
+      }
+    ],
+    "failure_evidence_sha256": "d009d651610b77da612d8ece27482e63d74ab74d70719139e9ec51e330f9e977",
+    "source_tree_sha256_before": "f1ee4fe03badb46fc8b99b1fc0c01b276bf743bba79438e6992af92f3114127f",
+    "source_tree_sha256_after": "f1ee4fe03badb46fc8b99b1fc0c01b276bf743bba79438e6992af92f3114127f",
+    "source_unchanged": true,
+    "write_replayed": false,
+    "tests_replayed": false,
+    "report_sha256": "B00C34DB64E705E1D5AF31C50138ED193E86069CD902D3DA372CA41701CFFE8B",
+    "demo_summary_sha256": "310BB7ADE577D34CFC946C9716585AE95BEDF6EAA796681F983B0D66A1E78F2A"
+  },
+  "tests": {
+    "m5": {"run": 10, "passed": 10, "failed": 0, "skipped": 0, "exit_code": 0},
+    "m3_m4_m5": {"run": 32, "passed": 31, "failed": 0, "skipped": 1, "exit_code": 0},
+    "full_deterministic_isolated_config": {"run": 116, "passed": 114, "failed": 0, "skipped": 2, "exit_code": 0}
+  },
+  "verified": [
+    "one bounded replan after new failure evidence",
+    "fresh approval and one-time receipt per attempt",
+    "retry exhaustion and repeated-failure termination",
+    "stale evidence and out-of-scope candidate rejection",
+    "read-only replay without writes or tests",
+    "source synthetic repository unchanged"
+  ],
+  "not_verified": [
+    "real-model autonomous patch generation",
+    "real user-repository writes",
+    "OS-level sandboxing",
+    "crash-resume and concurrent approvals"
+  ]
+}

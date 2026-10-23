@@ -56,6 +56,7 @@ class StaticNumericApplicabilityTests(unittest.TestCase):
             self.assertEqual(claim["applicability"], "STATICALLY_VERIFIABLE")
             self.assertEqual(claim["actual_value"], -250)
             self.assertEqual(claim["source_path"], "src/totals.py")
+            self.assertEqual(claim["source_line"], 2)
             wrong = evaluate_arithmetic_claims(
                 "total([-100, 50, -200]) returns -350",
                 trusted_reads=[evidence],
@@ -116,7 +117,8 @@ class StaticNumericApplicabilityTests(unittest.TestCase):
             )
             self.assertEqual(result["status"], "UNVERIFIABLE")
             self.assertEqual(
-                result["claims"][0]["reason"], "source_expectation_not_runtime_claim"
+                result["source_expectations"][0]["reason"],
+                "trusted_test_expectation_missing_or_ambiguous",
             )
         finally:
             temporary.cleanup()
