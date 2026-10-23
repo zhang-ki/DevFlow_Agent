@@ -232,6 +232,7 @@ config/config.personal.toml
 # Raw local model traces may contain machine paths, process details and
 # generated fixture copies. Keep them locally; commit sanitized summaries only.
 reports/*_real_model_runs/
+reports/*_workflow_runs/
 reports/interview_demo_runs/*/*.log
 reports/packaging/*.md
 reports/packaging/*.json

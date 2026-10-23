@@ -237,7 +237,8 @@ This checkout also contains a bounded, read-only software-engineering prototype 
 | M1.5 answer-quality checks (bounded arithmetic and citations) | **VERIFIED** deterministically; preserved real run remains historical exit code 3, with a separate offline re-evaluation |
 | CI failure diagnosis from captured pytest logs | **PARTIAL**: deterministic five-case slice and CLI demo pass; real Qwen obtained source evidence but its bounded final response was truncated |
 | Diff-only proposal, SQLite-backed independent approval, one-time receipt, isolated synthetic apply/test | **VERIFIED** for the bounded control flow; not registered as a production write tool |
-| Model-generated file edits, sandboxed tests, autonomous repair | **NOT_VERIFIED / NOT_RUN** |
+| M5 evidence-bound, one-replan control flow | **VERIFIED** deterministically on a synthetic repository; every attempt retains M4 approval and isolation |
+| Model-generated file edits, real user-repository writes, OS-level sandboxing | **NOT_VERIFIED / NOT_RUN** |
 
 The current read-only data flow is:
 
@@ -275,7 +276,21 @@ Run the synthetic demonstration:
 .\.venv\Scripts\python.exe scripts\demo_m4_workflow.py --approve --run-id m4-demo-local
 ```
 
-The first command stops at `APPROVAL_PENDING`; the second uses a clearly labeled synthetic reviewer and applies only to a disposable copy. The source fixture remains unchanged. The M4 control flow is **VERIFIED** for the deterministic synthetic scope; model-generated patch selection, real user-repository writes, OS-level sandboxing, Docker isolation, and autonomous re-planning remain **NOT_VERIFIED**. See [`docs/M4_EVIDENCE_WORKFLOW.md`](docs/M4_EVIDENCE_WORKFLOW.md) and the latest independent sanitized run summary [`reports/public/M4_REPAIR_WORKFLOW_2026-10-23-AUDIT.md`](reports/public/M4_REPAIR_WORKFLOW_2026-10-23-AUDIT.md).
+The first command stops at `APPROVAL_PENDING`; the second uses a clearly labeled synthetic reviewer and applies only to a disposable copy. The source fixture remains unchanged. The M4 control flow is **VERIFIED** for the deterministic synthetic scope; model-generated patch selection, real user-repository writes, OS-level sandboxing, and Docker isolation remain **NOT_VERIFIED**. See [`docs/M4_EVIDENCE_WORKFLOW.md`](docs/M4_EVIDENCE_WORKFLOW.md) and the latest independent sanitized run summary [`reports/public/M4_REPAIR_WORKFLOW_2026-10-23-AUDIT.md`](reports/public/M4_REPAIR_WORKFLOW_2026-10-23-AUDIT.md).
+
+### M5 bounded evidence-driven replanning
+
+M5 adds [`devflow_agent/bounded_replanning.py`](devflow_agent/bounded_replanning.py) as a small coordinator above M4. A candidate is accepted only when it binds the current failure fingerprint, an allowed path, and the current source SHA-256. The default budget is one replan (two total attempts). Every attempt receives a fresh M4 report and SQLite ledger, an explicit independent approval, one-time patch consumption, isolated apply, and a real fixed pytest run. Repeated failures, missing evidence, stale or out-of-scope candidates, approval refusal, timeout, persistence errors, and exhausted budget stop with distinct states.
+
+Run the deterministic demonstration:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\demo_m5_replanning.py `
+  --output-dir reports\m5_workflow_runs\m5-demo `
+  --run-id m5-demo --approve
+```
+
+The first synthetic candidate deliberately fails; the second is bound to that new pytest evidence and passes. The source fixture remains unchanged, while read-only replay validates both nested M4 reports without repeating writes or tests. This verifies the bounded control plane only. Real-model patch generation, real user-repository writes, crash-resume, and OS-level sandboxing remain **NOT_VERIFIED**. See [`docs/M5_BOUNDED_REPLANNING.md`](docs/M5_BOUNDED_REPLANNING.md) and the [sanitized M5 acceptance summary](reports/public/M5_BOUNDED_REPLANNING_2026-10-23.md).
 
 
 ### Latest bounded M2 real run
