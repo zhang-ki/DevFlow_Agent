@@ -1,0 +1,400 @@
+{
+  "schema_version": 1,
+  "stage": "M2",
+  "name": "ci_failure_diagnosis",
+  "date": "2026-10-23",
+  "status": "PARTIAL",
+  "branch": "devflow/m0-openmanus",
+  "head": "3309bf4e416fb1c74b008f3e86494439a31bad53",
+  "implementation": {
+    "module": "devflow_agent/diagnostics.py",
+    "cli_command": "devflow_agent.cli diagnose",
+    "bounded_agent_prompt_change": "devflow_agent/openmanus_agent.py explicitly requests one tool call per assistant decision",
+    "read_only_tools": [
+      "repository_search_readonly",
+      "repository_readonly_read"
+    ],
+    "commands_executed_from_log": false,
+    "writes_enabled": false,
+    "bounded_log_chars": 128000,
+    "max_failures": 20,
+    "max_evidence_lines": 12,
+    "max_evidence_chars": 8000,
+    "compact_final_contract": {
+      "module": "devflow_agent/diagnostics.py::DiagnosticReport.to_compact_dict",
+      "max_evidence_items": 3,
+      "fields": [
+        "failure_summary",
+        "candidate_root_cause",
+        "source_location",
+        "evidence",
+        "confidence",
+        "unconfirmed"
+      ],
+      "full_tool_results_in_final_projection": false,
+      "model_prompt_rules": "devflow_agent/openmanus_agent.py::COMPACT_DIAGNOSTIC_RESPONSE_RULES"
+    },
+    "numeric_applicability": {
+      "module": "devflow_agent.answer_quality.py",
+      "categories": [
+        "SUPPORTED",
+        "STATICALLY_VERIFIABLE",
+        "UNSUPPORTED",
+        "UNVERIFIABLE",
+        "NOT_APPLICABLE"
+      ],
+      "static_scope": "One trusted Python function with a single side-effect-free return expression; only literal arguments, closed names, bounded arithmetic and sum(sequence) are accepted.",
+      "rejected_scope": [
+        "branches",
+        "loops",
+        "dynamic_calls",
+        "external_state",
+        "ambiguous_sources",
+        "missing_or_invalid_trusted_reads"
+      ],
+      "execution_policy": "AST-only; no eval, exec or project-module import",
+      "fail_closed": true
+    }
+  },
+  "fixed_evaluation": {
+    "path": "evals/m2_ci_failures.jsonl",
+    "case_count": 5,
+    "pass_reports": 4,
+    "partial_reports": 1,
+    "fail_reports": 0,
+    "categories": [
+      "simple_assertion_failure",
+      "parameter_or_type_error",
+      "empty_value_error",
+      "boundary_condition",
+      "insufficient_evidence"
+    ],
+    "top1_evidence_localization_rate": 0.8,
+    "test_localization_all_cases": true,
+    "exception_classification_all_cases": true,
+    "read_only_fixture_unchanged": true
+  },
+  "tests": {
+    "m2_diagnostics": {
+      "run": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "m1_5_answer_quality": {
+      "run": 16,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "readonly_repository_and_agent": {
+      "run": 35,
+      "passed": 34,
+      "failed": 0,
+      "skipped": 1,
+      "exit_code": 0,
+      "skip_reason": "host policy prevents temporary directory junction creation"
+    },
+    "openmanus_tool_collection": {
+      "run": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "combined_affected_suite": {
+      "run": 56,
+      "passed": 55,
+      "failed": 0,
+      "skipped": 1,
+      "exit_code": 0
+    },
+    "python_compile": {
+      "files": 5,
+      "passed": 5,
+      "failed": 0,
+      "exit_code": 0
+    },
+    "full_in_place_discovery": "NOT_USED; project-local private config triggers the existing import guard",
+    "m2_output_contract": {
+      "run": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "m3_patch_flow": {
+      "run": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "m2_numeric_applicability": {
+      "run": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0
+    }
+  },
+  "cli_demo": {
+    "status": "PASS",
+    "exit_code": 0,
+    "repo": "tests/fixtures/repos/m2_ci_demo",
+    "log": "tests/fixtures/logs/m2_assertion_total.log",
+    "failures_parsed": 1,
+    "top1_source": "src/totals.py",
+    "trusted_evidence_items": 2,
+    "commands_executed": 0,
+    "fixture_unchanged": true
+  },
+  "real_model": {
+    "status": "FAIL_NOT_VERIFIED",
+    "model": "Qwen3.5-4B Q4_K_M",
+    "runtime": "llama.cpp b11424",
+    "endpoint": "http://127.0.0.1:11434/v1",
+    "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+    "runtime_sha256": "f8df891a5e4d10fa8cfc0f86c8d99617a06edd18d046e18b59ec3354f17fc12d",
+    "integration_scope": "existing read-only ask loop over a synthetic failure.log; the deterministic diagnostics parser is not itself exposed as a model tool",
+    "attempts": [
+      {
+        "run_id": "20261023T-m2-qwen35-4b-r1",
+        "status": "HARNESS_FAIL",
+        "ask_exit_code": 2,
+        "reason": "new harness passed the multi-word question without quoting; no model request was emitted",
+        "fixture_unchanged": true,
+        "remaining_owned_processes": 0,
+        "listener_after_cleanup": false
+      },
+      {
+        "run_id": "20261023T-m2-qwen35-4b-r2",
+        "status": "MODEL_LOOP_FAIL",
+        "ask_exit_code": 3,
+        "model_calls": 3,
+        "health": "PASS",
+        "models_identity": "PASS",
+        "tool_trace": [
+          "repository_search_readonly",
+          "repository_search_readonly",
+          "repository_readonly_read",
+          "repository_readonly_read"
+        ],
+        "tool_result_pairing": "REJECTED_MULTIPLE_TOOL_CALLS_WITHOUT_RESULTS",
+        "final_answer": "NOT_PRODUCED",
+        "trusted_read_evidence": 0,
+        "fixture_unchanged": true,
+        "remaining_owned_processes": 0,
+        "listener_after_cleanup": false,
+        "evidence": "reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r2/m2-real-model-run.json"
+      },
+      {
+        "run_id": "20261023T-m2-qwen35-4b-r3",
+        "status": "MODEL_TRUNCATED",
+        "ask_exit_code": 3,
+        "model_calls": 5,
+        "health": "PASS",
+        "models_identity": "PASS",
+        "tool_trace": [
+          "repository_search_readonly",
+          "repository_search_readonly",
+          "repository_readonly_read",
+          "repository_readonly_read"
+        ],
+        "tool_result_pairing": "PASS",
+        "trusted_read_evidence": 2,
+        "finish_reason": "length",
+        "final_answer": "TRUNCATED",
+        "citation_gate": "FAIL_MISSING_PATH_LINE_CITATION",
+        "fixture_unchanged": true,
+        "remaining_owned_processes": 0,
+        "listener_after_cleanup": false,
+        "evidence": "reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r3/m2-real-model-run.json"
+      },
+      {
+        "run_id": "20261023T-m2-qwen35-4b-r4",
+        "status": "BLOCKED_RESOURCE_PREFLIGHT",
+        "ask_exit_code": null,
+        "model_calls": 0,
+        "health": "NOT_RUN",
+        "models_identity": "NOT_RUN",
+        "tool_trace": [],
+        "final_answer": "NOT_RUN",
+        "trusted_read_evidence": 0,
+        "reason": "resource_preflight_insufficient_free_memory",
+        "fixture_unchanged": true,
+        "remaining_owned_processes": 0,
+        "listener_after_cleanup": false,
+        "evidence": "reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r4/m2-real-model-run.json",
+        "resource_preflight": {
+          "free_ram_gb": 0.3,
+          "model_file_gb": 2.55,
+          "required_min_gb": 4.05
+        }
+      },
+      {
+        "run_id": "20261023T-m2-qwen35-4b-r5-ctx4096",
+        "status": "BLOCKED_RESOURCE_PREFLIGHT",
+        "ask_exit_code": null,
+        "model_calls": 0,
+        "health": "NOT_RUN",
+        "models_identity": "NOT_RUN",
+        "tool_trace": [],
+        "final_answer": "NOT_RUN",
+        "trusted_read_evidence": 0,
+        "reason": "resource_preflight_insufficient_free_memory",
+        "fixture_unchanged": true,
+        "remaining_owned_processes": 0,
+        "listener_after_cleanup": false,
+        "context_tokens": 4096,
+        "max_output_tokens": 1536,
+        "evidence": "reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r5-ctx4096/m2-real-model-run.json",
+        "resource_preflight": {
+          "free_ram_gib": 0.473,
+          "model_file_gib": 2.553,
+          "required_min_gib": 4.053,
+          "sufficient": false
+        }
+      },
+      {
+        "run_id": "20261023T-m2-qwen35-4b-r6-ctx4096",
+        "status": "MODEL_ANSWER_QUALITY_UNVERIFIABLE",
+        "outer_script_exit_code": 1,
+        "ask_exit_code_recorded": null,
+        "model_calls": 4,
+        "context_tokens": 4096,
+        "max_output_tokens": 1536,
+        "health": "PASS",
+        "models_identity": "PASS",
+        "tool_trace": [
+          "repository_search_readonly",
+          "repository_readonly_read",
+          "repository_readonly_read"
+        ],
+        "tool_result_pairing": "PASS",
+        "trusted_read_evidence": 2,
+        "finish_reason": "stop",
+        "final_answer": "PRODUCED",
+        "citation_gate": "PASS",
+        "numeric_gate": "UNVERIFIABLE",
+        "answer_quality": "UNVERIFIABLE",
+        "fixture_unchanged": true,
+        "remaining_owned_processes": 0,
+        "listener_after_cleanup": false,
+        "cleanup_elapsed_seconds": 0.546,
+        "evidence": "reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r6-ctx4096/m2-real-model-run.json",
+        "reason": "The answer correctly diagnosed the source using trusted reads, but the bounded numeric checker cannot evaluate the project-specific total([1, -1]) call and therefore fails closed."
+      }
+    ],
+    "real_model_m2_gate": "NOT_VERIFIED",
+    "prior_real_model_evidence": "M1.5 run 20261023T102601Z-m15-python-health is preserved and is not an M2 diagnosis run.",
+    "truncation_diagnosis": {
+      "run_id": "20261023T-m2-qwen35-4b-r3",
+      "context_tokens": 3072,
+      "last_prompt_tokens": 2131,
+      "last_completion_tokens": 941,
+      "request_max_tokens": 1024,
+      "total_tokens": 3072,
+      "finish_reason": "length",
+      "classification": "CONTEXT_EXHAUSTED_BY_OUTPUT",
+      "evidence": "model-responses.jsonl line 5 usage and finish_reason; no context_limit runtime error"
+    },
+    "context_budget_follow_up": {
+      "implementation_status": "EXECUTED_ONCE_RESULT_QUALITY_BLOCKED",
+      "server_context_tokens": 4096,
+      "requested_final_answer_max_tokens": 1536,
+      "client_hard_output_ceiling": 1536,
+      "profile_default_preserved": 1024,
+      "runtime_support_check": {
+        "runtime": "llama.cpp b11424",
+        "help_exit_code": 0,
+        "supports_ctx_size": true
+      },
+      "deterministic_tests": {
+        "run": 23,
+        "passed": 23,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0
+      },
+      "resource_preflight": {
+        "free_ram_gib": 0.473,
+        "model_file_gib": 2.553,
+        "required_min_gib": 4.053,
+        "sufficient": false,
+        "decision": "BLOCKED_RESOURCE_PREFLIGHT",
+        "model_started": false,
+        "model_calls": 0,
+        "owned_processes_remaining": 0,
+        "listener_after_cleanup": false
+      },
+      "reason": "A single new real run was not started because available RAM remains below the bounded 4096-context preflight threshold.",
+      "latest_run_id": "20261023T-m2-qwen35-4b-r6-ctx4096",
+      "latest_result": {
+        "server_health": "PASS",
+        "model_identity": "PASS",
+        "model_calls": 4,
+        "finish_reason": "stop",
+        "citation_gate": "PASS",
+        "numeric_gate": "UNVERIFIABLE",
+        "answer_quality": "UNVERIFIABLE",
+        "fixture_unchanged": true,
+        "listener_after_cleanup": false,
+        "remaining_owned_processes": 0,
+        "evidence": "reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r6-ctx4096/m2-real-model-run.json"
+      }
+    },
+    "latest_attempt": {
+      "run_id": "20261023T-m2-qwen35-4b-r6-ctx4096",
+      "status": "MODEL_ANSWER_QUALITY_UNVERIFIABLE",
+      "outer_script_exit_code": 1,
+      "ask_exit_code_recorded": null,
+      "model_calls": 4,
+      "context_tokens": 4096,
+      "max_output_tokens": 1536,
+      "health": "PASS",
+      "models_identity": "PASS",
+      "tool_trace": [
+        "repository_search_readonly",
+        "repository_readonly_read",
+        "repository_readonly_read"
+      ],
+      "tool_result_pairing": "PASS",
+      "trusted_read_evidence": 2,
+      "finish_reason": "stop",
+      "final_answer": "PRODUCED",
+      "citation_gate": "PASS",
+      "numeric_gate": "UNVERIFIABLE",
+      "answer_quality": "UNVERIFIABLE",
+      "fixture_unchanged": true,
+      "remaining_owned_processes": 0,
+      "listener_after_cleanup": false,
+      "cleanup_elapsed_seconds": 0.546,
+      "evidence": "reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r6-ctx4096/m2-real-model-run.json",
+      "reason": "The answer correctly diagnosed the source using trusted reads, but the bounded numeric checker cannot evaluate the project-specific total([1, -1]) call and therefore fails closed."
+    },
+    "offline_reassessment": {
+      "mode": "offline_only_saved_answer",
+      "source_run_id": "20261023T-m2-qwen35-4b-r6-ctx4096",
+      "status": "UNVERIFIABLE",
+      "citation": "PASS",
+      "numeric": "UNVERIFIABLE",
+      "reason": "source_expectation_not_runtime_claim",
+      "raw_evidence_unchanged": true,
+      "model_restarted": false,
+      "evidence": "reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r6-ctx4096/offline-quality-reassessment-static-numeric.json"
+    }
+  },
+  "security": {
+    "bash": false,
+    "python_execute": false,
+    "file_write_tools": false,
+    "mcp": false,
+    "external_api": false,
+    "task_b": "NOT_RUN",
+    "commit_or_push": "NOT_PERFORMED"
+  },
+  "next_gate": "M2 remains PARTIAL after the single bounded real run: preserve this evidence and resolve the diagnostic numeric-claim applicability offline before any future model run."
+}

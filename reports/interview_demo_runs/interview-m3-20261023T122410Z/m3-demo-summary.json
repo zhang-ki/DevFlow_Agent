@@ -1,0 +1,22 @@
+{
+    "demo_run_id":  "interview-m3-20261023T122410Z",
+    "task_id":  "interview-m3-20261023T122410Z-task",
+    "run_id":  "interview-m3-20261023T122410Z",
+    "kind":  "synthetic_m3_repair_control_flow",
+    "command":  ".venv\\\\Scripts\\\\python.exe scripts\\\\demo_m3_repair.py --approve --task-id interview-m3-20261023T122410Z-task --run-id interview-m3-20261023T122410Z",
+    "exit_code":  0,
+    "log":  "reports\\interview_demo_runs\\interview-m3-20261023T122410Z\\m3-demo.log",
+    "model_started":  false,
+    "source_workspace_written":  false,
+    "expected_flow":  [
+                          "baseline pytest failed",
+                          "diagnostic generated",
+                          "diff proposed",
+                          "independent synthetic approval",
+                          "SQLite ledger and one-time receipt",
+                          "isolated copy patched",
+                          "post-apply pytest passed",
+                          "source hash unchanged"
+                      ],
+    "note":  "The patch and reviewer are deterministic synthetic controls; this does not prove model-generated repair or an OS-level sandbox."
+}

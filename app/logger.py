@@ -1,3 +1,4 @@
+import os
 import sys
 from datetime import datetime
 
@@ -12,7 +13,7 @@ _print_level = "INFO"
 def define_log_level(print_level="INFO", logfile_level="DEBUG", name: str = None):
     """Adjust the log level to above level"""
     global _print_level
-    _print_level = print_level
+    _print_level = os.environ.get("DEVFLOW_AGENT_LOG_LEVEL", print_level)
 
     current_date = datetime.now()
     formatted_date = current_date.strftime("%Y%m%d%H%M%S")
@@ -21,8 +22,10 @@ def define_log_level(print_level="INFO", logfile_level="DEBUG", name: str = None
     )  # name a log with prefix name
 
     _logger.remove()
-    _logger.add(sys.stderr, level=print_level)
-    _logger.add(PROJECT_ROOT / f"logs/{log_name}.log", level=logfile_level)
+    _logger.add(sys.stderr, level=_print_level)
+    disable_file_log = os.environ.get("DEVFLOW_AGENT_DISABLE_FILE_LOG", "").lower()
+    if disable_file_log not in {"1", "true", "yes"}:
+        _logger.add(PROJECT_ROOT / f"logs/{log_name}.log", level=logfile_level)
     return _logger
 
 

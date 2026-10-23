@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-23",
+  "scope_frozen": true,
+  "model_restarted": false,
+  "task_b_run": false,
+  "demo_entry": "scripts/run_interview_demo.ps1",
+  "runs": {
+    "check": {"status": "PASS", "exit_code": 0},
+    "m2": {
+      "run_id": "interview-m2-20261023T122226Z",
+      "status": "PARTIAL",
+      "launcher_exit_code": 3,
+      "live_model_rerun": false,
+      "source_run_id": "20261023T-m2-qwen35-4b-r6-ctx4096",
+      "citation": "PASS",
+      "numeric": "UNVERIFIABLE",
+      "model_service_listener": false,
+      "evidence": "reports/interview_demo_runs/interview-m2-20261023T122226Z/m2-demo-summary.json"
+    },
+    "m3": {
+      "run_id": "interview-m3-20261023T122410Z",
+      "status": "PASS",
+      "launcher_exit_code": 0,
+      "baseline_exit_code": 1,
+      "post_apply_exit_code": 0,
+      "approvals": 1,
+      "writes_to_real_workspace": 0,
+      "source_unchanged": true,
+      "task_id": "interview-m3-20261023T122410Z-task",
+      "evidence": "reports/interview_demo_runs/interview-m3-20261023T122410Z/m3-demo.log"
+    }
+  },
+  "verification": {
+    "targeted_unittest": {"run": 17, "passed": 17, "failed": 0, "skipped": 0, "exit_code": 0},
+    "m3_regression_after_unique_ids": {"run": 9, "passed": 9, "failed": 0, "skipped": 0, "exit_code": 0},
+    "python_compileall": {"status": "PASS", "exit_code": 0},
+    "markdown_relative_links": {"status": "PASS", "exit_code": 0},
+    "git_diff_check": {"status": "PASS", "exit_code": 0}
+  },
+  "capabilities": {
+    "readonly_repository_evidence": "VERIFIED",
+    "m2_real_model_diagnosis": "PARTIAL",
+    "m3_synthetic_control_flow": "VERIFIED",
+    "model_generated_patch": "NOT_VERIFIED",
+    "real_workspace_write": "NOT_VERIFIED",
+    "os_level_sandbox": "NOT_VERIFIED",
+    "failure_replan": "NOT_VERIFIED"
+  }
+}

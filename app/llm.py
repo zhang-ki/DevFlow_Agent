@@ -196,6 +196,7 @@ class LLM:
             self.api_key = llm_config.api_key
             self.api_version = llm_config.api_version
             self.base_url = llm_config.base_url
+            self.last_finish_reason = None
 
             # Add token counting related attributes
             self.total_input_tokens = 0
@@ -735,9 +736,14 @@ class LLM:
 
             # Check if response is valid
             if not response.choices or not response.choices[0].message:
+                self.last_finish_reason = None
                 print(response)
                 # raise ValueError("Invalid or empty response from LLM")
                 return None
+
+            # Preserve the provider's termination signal so bounded adapters can
+            # reject truncated tool calls instead of executing partial output.
+            self.last_finish_reason = response.choices[0].finish_reason
 
             # Update token counts
             self.update_token_count(

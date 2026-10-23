@@ -200,3 +200,44 @@ cython_debug/
 
 # node
 node_modules
+
+# Local-only models, weights, caches and private developer configuration
+models/
+.models/
+weights/
+checkpoints/
+model_cache/
+.downloads/
+.cache/
+*.gguf
+*.ggml
+*.safetensors
+*.safetensors.index.json
+pytorch_model*.bin
+*.ckpt
+*.pt
+*.pth
+.env.*
+!.env.example
+.secrets/
+secrets/
+credentials.json
+credentials.toml
+*.pem
+*.p12
+*.pfx
+config/config.local.toml
+config/config.personal.toml
+
+# Raw local model traces may contain machine paths, process details and
+# generated fixture copies. Keep them locally; commit sanitized summaries only.
+reports/*_real_model_runs/
+reports/interview_demo_runs/*/*.log
+reports/packaging/*.md
+reports/packaging/*.json
+!reports/packaging/INTERVIEW_DEMO_DELIVERY_2026-10-23.md
+!reports/packaging/INTERVIEW_DEMO_DELIVERY_2026-10-23.json
+
+# Versioned synthetic failure inputs remain public and reproducible.
+!tests/fixtures/logs/
+!tests/fixtures/logs/*.log

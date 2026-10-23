@@ -1,0 +1,53 @@
+{
+    "demo_run_id":  "interview-m2-20261023T122235Z",
+    "kind":  "preserved_real_model_trace_offline_replay",
+    "live_model_rerun":  false,
+    "source_run_id":  "20261023T-m2-qwen35-4b-r6-ctx4096",
+    "source_status":  "FAIL",
+    "source_acceptance":  "REAL_MODEL_DIAGNOSTIC_NOT_VERIFIED",
+    "source_ask_exit_code":  null,
+    "model":  "Qwen3.5-4B Q4_K_M",
+    "runtime":  "version: 0.5.0-dev (build 11424, commit 6c59c4007)\nbuilt with Clang 20.1.8 for Windows x86_64\n",
+    "endpoint":  "http://127.0.0.1:11434/v1",
+    "model_calls":  4,
+    "finish_reason":  "stop (as recorded in the preserved run)",
+    "tool_trace":  [
+                       {
+                           "tool":  "repository_search_readonly",
+                           "status":  "completed",
+                           "tool_call_id":  "goTcanu4OAm6wl0S4lPheetsxiyJPuDc"
+                       },
+                       {
+                           "tool":  "repository_readonly_read",
+                           "status":  "completed",
+                           "tool_call_id":  "gochp1WFfesJ1f2APYKx9C5s6VIJjmBf"
+                       },
+                       {
+                           "tool":  "repository_readonly_read",
+                           "status":  "completed",
+                           "tool_call_id":  "6lAe2VKUya1bmAAIIwbOB1SynPNlowfX"
+                       }
+                   ],
+    "citation_status":  "PASS",
+    "numeric_status":  "UNVERIFIABLE",
+    "overall_quality":  "UNVERIFIABLE",
+    "fixture_unchanged":  true,
+    "cleanup":  {
+                    "owned_pids":  [
+                                       76896,
+                                       66704,
+                                       76888
+                                   ],
+                    "remaining_pids":  [
+
+                                       ],
+                    "shutdown_elapsed_seconds":  0.546,
+                    "listener_after_cleanup":  false
+                },
+    "model_service_currently_listening":  false,
+    "evidence":  [
+                     "reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r6-ctx4096/m2-real-model-run.json",
+                     "reports/m2_real_model_runs/20261023T-m2-qwen35-4b-r6-ctx4096/offline-quality-reassessment-static-numeric.json"
+                 ],
+    "note":  "This option replays preserved evidence and never starts a model or sends a new request. M2 remains PARTIAL because numeric quality is UNVERIFIABLE."
+}

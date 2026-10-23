@@ -1,0 +1,375 @@
+{
+  "acceptance_id": "20261023T083923Z-m13-qwen35-4b",
+  "date": "2026-10-23",
+  "status": "PARTIAL",
+  "real_model_gate": "FAIL",
+  "verified_label": "REAL_MODEL_READONLY_AGENT_VERIFIED_NOT_ACHIEVED",
+  "scope": "One real local Qwen ask against the synthetic read-only repository; no Task B, writes, approvals, Bash, PythonExecute, external API, downloads, or commit/push.",
+  "project": {
+    "path": "<repo-root>",
+    "branch": "devflow/m0-openmanus",
+    "head": "3309bf4e416fb1c74b008f3e86494439a31bad53",
+    "working_tree_preserved": true,
+    "staged_or_committed": false
+  },
+  "local_model_config": {
+    "path": "config/config.toml",
+    "sha256": "40B887F9ADAC2AA5DDB980CE58361D267C064664472336E1ED3C409D68ACB658",
+    "git_ignored": true,
+    "created_if_absent": true,
+    "contains_secret": false,
+    "endpoint": "http://127.0.0.1:11434/v1"
+  },
+  "model_inventory": [
+    {
+      "name": "Qwen3-0.6B Q8_0",
+      "path": "<model-root>\\agentexpr-retained\\qwen3-0.6b-20261023\\Qwen3-0.6B-Q8_0.gguf",
+      "format": "GGUF",
+      "bytes": 639446688,
+      "metadata": "local_model_qwen3_0_6b_low_resource.json; NATIVE_TOOL_CALLS; context 1024; sidecar tokenizer/chat template not found; metadata expected in GGUF",
+      "runtime": "llama.cpp b11424 CPU; --list-devices none",
+      "selected": false,
+      "reason": "Smaller but lower capability; current acceptance selected existing 4B profile."
+    },
+    {
+      "name": "Qwen3.5-4B Q4_K_M",
+      "path": "<model-root>\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf",
+      "format": "GGUF",
+      "bytes": 2740937888,
+      "sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4",
+      "metadata": "local_model_memory_safe.json (NATIVE_TOOL_CALLS, context 3072, batch 256, ubatch 64, 8 threads); local_model_native.json (NATIVE_TOOL_CALLS, context 4096); local_model_structured.json (STRUCTURED_TOOL_INTENT); no sidecar tokenizer/template found",
+      "runtime": "llama.cpp b11424 CPU, SHA-256 F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D",
+      "selected": true,
+      "reason": "Existing Q4 model with a verified native-tool profile and lower memory demand than 9B; suitable for bounded iteration."
+    },
+    {
+      "name": "Qwen3.5-9B Q4_K_M",
+      "path": "<model-root>\\qwen3.5-9b-bartowski\\Qwen_Qwen3.5-9B-Q4_K_M.gguf",
+      "format": "GGUF",
+      "bytes": 6169341984,
+      "sha256": "D784CE9EDA1A5A7B51E8F705A9E6310844BF4F173654D115823C775FDEA56D43",
+      "metadata": "local_model_9b_taskb_3072.json and local_model_9b_taskb_6144.json; NATIVE_TOOL_CALLS; sidecar tokenizer/template not found",
+      "runtime": "llama.cpp b11424 CPU, no GPU devices",
+      "selected": false,
+      "reason": "Larger memory footprint; 4B was a better first iteration candidate for available free RAM."
+    },
+    {
+      "name": "Qwen2.5-Coder-3B",
+      "path": "<model-root>\\qwen2.5-coder-3b",
+      "format": "GGUF expected by config, but no recognized model weight found",
+      "bytes": null,
+      "metadata": "configuration/logs present, model weight absent",
+      "runtime": "llama.cpp b10964 CPU; --list-devices none",
+      "selected": false,
+      "reason": "Cannot run without a local weight file."
+    }
+  ],
+  "hardware": {
+    "cpu": "Intel Core i7-14650HX, 16 cores / 24 logical processors",
+    "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "vram_total_mib": 8188,
+    "vram_free_mib_at_check": 6932,
+    "llama_cpp_gpu_backend": "No existing llama-server binary exposed any device; GPU not used",
+    "system_ram_total_bytes": 16944848896,
+    "system_ram_free_bytes_at_preflight": 6753873920,
+    "free_commit_bytes_at_preflight": 11878481920
+  },
+  "runtime": {
+    "path": "<model-root>\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe",
+    "sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D",
+    "version": "llama.cpp 0.5.0-dev, build 11424, commit 6c59c4007",
+    "backend": "CPU",
+    "command": "\"<model-root>\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe\" -m <model-root>\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf --host 127.0.0.1 --port 11434 --alias devflow-qwen35-4b --ctx-size 3072 --threads 8 --batch-size 256 --ubatch-size 64 --n-gpu-layers 0 --parallel 1 --jinja",
+    "bind": "127.0.0.1:11434",
+    "context": 3072,
+    "threads": 8,
+    "batch": 256,
+    "ubatch": 64,
+    "parallel": 1,
+    "jinja_enabled": true,
+    "n_gpu_layers": 0,
+    "server_built_in_tools_enabled": false,
+    "health_url": "http://127.0.0.1:11434/health",
+    "health_status": 200,
+    "health_body": "{\"status\":\"ok\"}",
+    "startup_seconds": 3.614,
+    "health_attempts": [
+      {
+        "time_utc": "2026-10-23T08:40:46.5604687Z",
+        "state": "http",
+        "status": 503,
+        "body": "{\"error\":{\"message\":\"Loading model\",\"type\":\"unavailable_error\",\"code\":503}}"
+      },
+      {
+        "time_utc": "2026-10-23T08:40:48.6119131Z",
+        "state": "http",
+        "status": 503,
+        "body": "{\"error\":{\"message\":\"Loading model\",\"type\":\"unavailable_error\",\"code\":503}}"
+      },
+      {
+        "time_utc": "2026-10-23T08:40:50.1281063Z",
+        "state": "http",
+        "status": 200,
+        "body": "{\"status\":\"ok\"}"
+      }
+    ],
+    "models_status": 200,
+    "models_body": {
+      "models": [
+        {
+          "name": "devflow-qwen35-4b",
+          "model": "devflow-qwen35-4b",
+          "modified_at": "",
+          "size": "",
+          "digest": "",
+          "type": "model",
+          "description": "",
+          "tags": [
+            ""
+          ],
+          "capabilities": [
+            "completion"
+          ],
+          "parameters": "",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "",
+            "families": [
+              ""
+            ],
+            "parameter_size": "",
+            "quantization_level": ""
+          }
+        }
+      ],
+      "object": "list",
+      "data": [
+        {
+          "id": "devflow-qwen35-4b",
+          "aliases": [
+            "devflow-qwen35-4b"
+          ],
+          "tags": [],
+          "object": "model",
+          "created": 1792744851,
+          "owned_by": "llamacpp",
+          "meta": {
+            "vocab_type": 2,
+            "n_vocab": 248320,
+            "n_ctx": 3072,
+            "n_ctx_train": 262144,
+            "n_embd": 2560,
+            "n_params": 4205751296,
+            "size": 2729969664,
+            "ftype": "Q4_K - Medium"
+          }
+        }
+      ]
+    },
+    "server_log_path": "<repo-root>\\reports\\m1_3_real_model_runs\\20261023T083923Z-m13-qwen35-4b\\llama-server.stderr.log",
+    "server_log_confirms_model_loaded": true
+  },
+  "ask": {
+    "command": "python -m devflow_agent.cli ask --repo tests/fixtures/repos/readonly_demo --question \"Explain the total function and cite the source.\" --max-steps 6 --timeout-seconds 180",
+    "pid": 63520,
+    "started_utc": "2026-10-23T08:41:14.8169729Z",
+    "elapsed_seconds": 39.328,
+    "exit_code": 3,
+    "status": "failed",
+    "terminal_reason": "tool_error",
+    "model": "devflow-qwen35-4b",
+    "model_calls": 2,
+    "request_timeout_seconds": 120,
+    "run_timeout_seconds": 180,
+    "max_steps": 6,
+    "allowed_tools": [
+      "repository_readonly_read",
+      "repository_search_readonly"
+    ],
+    "tool_trace": [
+      {
+        "call_index": 1,
+        "tool": "repository_search_readonly",
+        "tool_call_id": "ESJGuvxBIicUoMmHiHWIIbteDLByahMI",
+        "arguments": {
+          "limit": 20,
+          "query": "total function"
+        },
+        "status": "completed",
+        "returned_candidate_paths": [
+          "src/totals.py",
+          "tests/test_totals.py"
+        ],
+        "candidate_read_evidence": false
+      },
+      {
+        "call_index": 2,
+        "tool": "repository_readonly_read",
+        "tool_call_id": "1hFke2zd03M4CDqlhKDIXb4xqnC5dE1u",
+        "arguments": {
+          "end_line": 20,
+          "path": "src/totals.py",
+          "start_line": 1
+        },
+        "status": "error",
+        "error": "invalid_line_range",
+        "message": "line range is invalid or exceeds the configured limit",
+        "actual_line_count": 10
+      }
+    ],
+    "read_evidence_count": 0,
+    "final_answer": "",
+    "citations": {
+      "citations": [],
+      "errors": [
+        "missing_path_line_citation",
+        "no_trusted_read_evidence"
+      ],
+      "valid": false
+    },
+    "output_path": "<repo-root>\\reports\\m1_3_real_model_runs\\20261023T083923Z-m13-qwen35-4b\\ask.stdout.json",
+    "stderr_path": "<repo-root>\\reports\\m1_3_real_model_runs\\20261023T083923Z-m13-qwen35-4b\\ask.stderr.log",
+    "exact_server_request_metrics": [
+      {
+        "server_task": 0,
+        "prompt_tokens": 524,
+        "generated_tokens": 138,
+        "prompt_eval_ms": 6556.01,
+        "generation_ms": 12950.44,
+        "total_ms": 19506.45,
+        "finish_reason": "tool_calls",
+        "relative_start": "0:30.826",
+        "relative_end": "0:50.334"
+      },
+      {
+        "server_task": 143,
+        "prompt_tokens": 348,
+        "generated_tokens": 163,
+        "prompt_eval_ms": 4304.29,
+        "generation_ms": 15315.58,
+        "total_ms": 19619.87,
+        "finish_reason": "tool_calls",
+        "relative_start": "0:50.370",
+        "relative_end": "1:09.990"
+      }
+    ],
+    "interpretation": "The model autonomously searched, then selected src/totals.py for a read. It requested lines 1-20 although the file has 10 lines; the read tool returned invalid_line_range. The runner stopped on tool_error, so there was no successful read evidence, no follow-up model call, and no final answer."
+  },
+  "fixture": {
+    "before": [
+      {
+        "path": "README.md",
+        "sha256": "B62BE841863CA0F69A3E8111B8DCB325487E8A039EFD4EBABD97B3A1C026F58F",
+        "bytes": 71
+      },
+      {
+        "path": "src/totals.py",
+        "sha256": "5694F2532BEA4EF6FC840D38015FDF627D7DE1ACCD89F4DC9399117CF6015266",
+        "bytes": 207
+      },
+      {
+        "path": "tests/test_totals.py",
+        "sha256": "B07B1161971ED1826C26CDDA7395A1E7D50735A25E179EDEE3BE947A0FEA3941",
+        "bytes": 79
+      }
+    ],
+    "after": [
+      {
+        "path": "README.md",
+        "sha256": "B62BE841863CA0F69A3E8111B8DCB325487E8A039EFD4EBABD97B3A1C026F58F",
+        "bytes": 71
+      },
+      {
+        "path": "src/totals.py",
+        "sha256": "5694F2532BEA4EF6FC840D38015FDF627D7DE1ACCD89F4DC9399117CF6015266",
+        "bytes": 207
+      },
+      {
+        "path": "tests/test_totals.py",
+        "sha256": "B07B1161971ED1826C26CDDA7395A1E7D50735A25E179EDEE3BE947A0FEA3941",
+        "bytes": 79
+      }
+    ],
+    "unchanged": true
+  },
+  "deterministic_tests": {
+    "final_invocation": {
+      "command": "python -m unittest discover -s tests\\devflow_agent -v",
+      "total": 38,
+      "passed": 37,
+      "failed": 0,
+      "skipped": 1,
+      "exit_code": 0,
+      "duration_seconds": 5.131,
+      "log": "<repo-root>\\reports\\m1_3_real_model_runs\\20261023T083923Z-m13-qwen35-4b\\deterministic-tests-isolated.log"
+    },
+    "initial_with_config_present": {
+      "total": 38,
+      "passed": 31,
+      "failed": 6,
+      "skipped": 1,
+      "exit_code": 1,
+      "cause": "six test cases refused to load a project-local config.toml as required by their isolation guard",
+      "log": "<repo-root>\\reports\\m1_3_real_model_runs\\20261023T083923Z-m13-qwen35-4b\\deterministic-tests.log"
+    },
+    "config_restored_after_final_run": true,
+    "config_sha256_unchanged": true,
+    "skipped_reason": "Windows host policy blocked real directory junction creation."
+  },
+  "cleanup": {
+    "status": "clean",
+    "elapsed_seconds": 2.857,
+    "server_pid": 52656,
+    "server_exit_confirmed": true,
+    "task_child_processes": [
+      {
+        "pid": 29752,
+        "parent_pid": 52656,
+        "name": "conhost.exe",
+        "path": "C:\\WINDOWS\\system32\\conhost.exe",
+        "creation": "2026-10-23T16:40:46.545258+08:00"
+      }
+    ],
+    "child_actions": [
+      {
+        "pid": 29752,
+        "action": "already_exited",
+        "path": "C:\\WINDOWS\\system32\\conhost.exe"
+      }
+    ],
+    "remaining_processes": [],
+    "listener_remaining": false,
+    "live_llama_server_after": "NONE"
+  },
+  "evidence_files": [
+    "preflight.json",
+    "runtime-selection.json",
+    "server-startup.json",
+    "llama-server.stdout.log",
+    "llama-server.stderr.log",
+    "ask-run.json",
+    "ask.stdout.json",
+    "ask.stderr.log",
+    "process-cleanup.json",
+    "deterministic-tests.json",
+    "deterministic-tests.log",
+    "deterministic-tests-isolated.json",
+    "deterministic-tests-isolated.log"
+  ],
+  "safety": {
+    "no_model_download": true,
+    "no_external_api": true,
+    "no_task_b": true,
+    "no_write_tools_registered": true,
+    "no_write_or_approval_attempt": true,
+    "fixture_modified": false,
+    "task_server_bound_loopback_only": true,
+    "no_commit_or_push": true,
+    "only_task_created_server_was_stopped": true
+  },
+  "independent_reviewer": "NOT_RUN; no separate reviewer was available in this turn.",
+  "next_minimum": "Improve read-tool schema/instructions so the model receives or can omit the file line bound safely, while preserving rejection of out-of-range requests; add deterministic coverage, then schedule a separate single real-model ask.",
+  "exe_built": false,
+  "fixture_write_count": 0
+}

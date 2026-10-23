@@ -225,3 +225,80 @@ OpenManus is built by contributors from MetaGPT. Huge thanks to this agent commu
   url = {https://doi.org/10.5281/zenodo.15186407},
 }
 ```
+
+## DevFlow-Agent research extension
+
+This checkout also contains a bounded, read-only software-engineering prototype built on the fixed OpenManus source baseline. It is intended for local demonstrations and engineering interviews; it is not a general-purpose autonomous coding agent.
+
+| Capability | Current status |
+|---|---|
+| Repository indexing, keyword/symbol search, trusted reads | **VERIFIED** in deterministic synthetic-repository tests |
+| OpenManus ToolCollection with exactly two read-only tools | **VERIFIED** in offline integration tests |
+| M1.5 answer-quality checks (bounded arithmetic and citations) | **VERIFIED** deterministically; preserved real run remains historical exit code 3, with a separate offline re-evaluation |
+| CI failure diagnosis from captured pytest logs | **PARTIAL**: deterministic five-case slice and CLI demo pass; real Qwen obtained source evidence but its bounded final response was truncated |
+| Diff-only proposal, SQLite-backed independent approval, one-time receipt, isolated synthetic apply/test | **VERIFIED** for the bounded control flow; not registered as a production write tool |
+| Model-generated file edits, sandboxed tests, autonomous repair | **NOT_VERIFIED / NOT_RUN** |
+
+The current read-only data flow is:
+
+```mermaid
+flowchart LR
+  Q[CLI question or captured pytest log] --> A[Bounded Agent/diagnostic adapter]
+  A --> S[Repository search]
+  S --> R[Trusted file read]
+  R --> E[Path, line range and SHA-256 evidence]
+  E --> O[JSON/Markdown report]
+```
+
+For the deterministic CI diagnosis demo, run from this checkout:
+
+```powershell
+.\.venv\Scripts\python.exe -m devflow_agent.cli diagnose --repo tests/fixtures/repos/m2_ci_demo --log tests/fixtures/logs/m2_assertion_total.log --exit-code 1 --format json
+.\.venv\Scripts\python.exe -m unittest tests.devflow_agent.test_m2_diagnostics -v
+\.venv\Scripts\python.exe -m unittest tests.devflow_agent.test_m2_output_contract tests.devflow_agent.test_m3_patch_flow -v
+\.venv\Scripts\python.exe -m unittest tests.devflow_agent.test_m3_ledger -v
+\.venv\Scripts\python.exe scripts/demo_m3_repair.py --approve
+```
+
+The implementation is intentionally read-only: it does not register Bash, Python execution, file editing, MCP write tools, or arbitrary commands from a log. Detailed evidence and current limitations are in [`reports/public/M2_CI_DIAGNOSTICS_2026-10-23.md`](reports/public/M2_CI_DIAGNOSTICS_2026-10-23.md), [`docs/ARCHITECTURE_DECISIONS.md`](docs/ARCHITECTURE_DECISIONS.md), and [`docs/INTERVIEW_STORY.md`](docs/INTERVIEW_STORY.md). M2 remains **PARTIAL** after the single permitted 4096-context follow-up: the real model completed search, two trusted reads, and an untruncated cited answer, but the bounded numeric gate returned **UNVERIFIABLE** for the project-specific `total([1, -1])` call and the acceptance exited `1`. The run evidence is preserved; no retry was made.
+
+The M3 demonstration is deliberately separate from the read-only Agent tools. It creates a proposal from a trusted file digest, persists the proposal and independent reviewer decision in a temporary SQLite ledger, prints a standard diff, consumes the approval once, and applies only to a temporary copy. The fixed `pytest -q` runner records bounded output, exit codes, and timeout cleanup evidence. The source fixture remains unchanged. This is a controlled synthetic process runner, not a claim of OS-level sandboxing or model-generated patch selection. The latest real-model M2 follow-up was executed once with Qwen3.5-4B at context 4096 and max output 1536. Health, model identity, tool pairing, trusted-read citations, fixture immutability, and process cleanup passed; the numeric quality gate remained UNVERIFIABLE, so M2 is still PARTIAL.
+
+
+### Latest bounded M2 real run
+
+- Run ID: `20261023T-m2-qwen35-4b-r6-ctx4096`
+- Command: `powershell -ExecutionPolicy Bypass -File .\scripts\run_m2_real_model_case.ps1 -RepoRoot <repo-root> -ModelRoot <model-root> -RunId 20261023T-m2-qwen35-4b-r6-ctx4096`
+- Model/runtime: Qwen3.5-4B Q4_K_M / llama.cpp b11424; `127.0.0.1:11434`; context `4096`; max output `1536`.
+- Trace: search → trusted read (`src/totals.py`) → trusted read (`tests/test_totals.py`) → final answer; `finish_reason=stop`.
+- Quality: citations **PASS**, numeric quality **UNVERIFIABLE**, overall **PARTIAL**; no writes or Task B.
+- Evidence: the preserved raw run is intentionally kept out of the public baseline because it contains machine-local paths; the sanitized summary is in [`reports/public/M2_CI_DIAGNOSTICS_2026-10-23.md`](reports/public/M2_CI_DIAGNOSTICS_2026-10-23.md).
+
+
+The M2 quality gate now classifies bounded project-function claims separately from arithmetic expressions. A simple trusted-read function such as `def total(values): return sum(values)` can be statically checked without executing project code; branches, dynamic calls, external state, missing evidence, and source-test expectation text remain fail-closed. The preserved real answer from `20261023T-m2-qwen35-4b-r6-ctx4096` was re-evaluated offline and remains `UNVERIFIABLE` for numeric quality, so M2 remains PARTIAL.
+
+Offline re-evaluation command:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/recheck_m2_saved_answer.py
+```
+
+### Interview demo entry
+
+The frozen M1–M3 demo surface is exposed through one bounded PowerShell
+launcher. It checks the project environment and never starts a model, sends an
+API request, kills a process, or writes a real workspace:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run_interview_demo.ps1 -Demo check
+powershell -ExecutionPolicy Bypass -File .\scripts\run_interview_demo.ps1 -Demo m2
+powershell -ExecutionPolicy Bypass -File .\scripts\run_interview_demo.ps1 -Demo m3
+```
+
+`m2` creates a new summary that points to the preserved Qwen3.5-4B run and its
+offline quality reassessment. It does not rerun the model; the historical M2
+status remains `PARTIAL` because numeric quality is `UNVERIFIABLE`. `m3` runs
+the deterministic synthetic repair demonstration with an independent synthetic
+reviewer and an isolated copy. It does not claim model-generated repair or an
+OS-level sandbox. See [`docs/INTERVIEW_OUTLINE.md`](docs/INTERVIEW_OUTLINE.md)
+for the short interview explanation and exact evidence boundary.

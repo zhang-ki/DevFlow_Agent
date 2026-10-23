@@ -1,0 +1,448 @@
+{
+  "schema_version": 1,
+  "stage": "M1.5",
+  "date": "2026-10-23",
+  "overall_status": "PARTIAL",
+  "deterministic_gate": "PASS",
+  "baseline": {
+    "branch": "devflow/m0-openmanus",
+    "head": "3309bf4e416fb1c74b008f3e86494439a31bad53",
+    "upstream_sha": "3309bf4e416fb1c74b008f3e86494439a31bad53",
+    "worktree_changes_preserved": true,
+    "staged_changes": 0
+  },
+  "implementation": {
+    "new_files": [
+      "devflow_agent/answer_quality.py",
+      "devflow_agent/diagnostics.py",
+      "evals/m1_5_answer_quality.jsonl",
+      "evals/m2_ci_failures.jsonl",
+      "tests/devflow_agent/test_answer_quality.py",
+      "tests/devflow_agent/test_m2_diagnostics.py",
+      "scripts/recheck_m15_saved_answer.py"
+    ],
+    "modified_files": [
+      "devflow_agent/real_readonly_agent.py",
+      "tests/devflow_agent/test_readonly_repository.py",
+      "docs/READ_ONLY_REPOSITORY_CLI.md",
+      "plans/ROADMAP.md"
+    ],
+    "numeric": {
+      "status": "VERIFIED_DETERMINISTIC",
+      "safe_ast_only": true,
+      "uses_eval_or_exec": false,
+      "operators": [
+        "+",
+        "-",
+        "*",
+        "/",
+        "//",
+        "%",
+        "**",
+        "unary +/-",
+        "parentheses",
+        "sum(literal numeric list)"
+      ],
+      "limits": {
+        "expression_chars": 160,
+        "ast_nodes": 64,
+        "ast_depth": 16,
+        "sum_items": 64,
+        "absolute_input": 1000000000000,
+        "absolute_result": 1e+100,
+        "absolute_exponent": 12,
+        "float_rel_tolerance": 1e-09,
+        "float_abs_tolerance": 1e-09
+      },
+      "unsupported": "UNVERIFIABLE",
+      "scope": "Explicit bounded arithmetic claims only; arbitrary natural-language math/facts are not proven",
+      "real_model_result": "ORIGINAL_UNVERIFIABLE_ZERO_EXTRACTED_CLAIMS_OFFLINE_RECHECK_PASS"
+    },
+    "citations": {
+      "status": "VERIFIED_DETERMINISTIC",
+      "checks": [
+        "authorized workspace path",
+        "line range contained in trusted read",
+        "fragment hash matches returned text",
+        "full-file hash revalidated on current disk version"
+      ],
+      "stale_or_missing_evidence_classified": true,
+      "real_model_result": "OFFLINE_RECHECK_PASS_SAVED_RUN_ONLY"
+    },
+    "quality_statuses": [
+      "PASS",
+      "NUMERIC_MISMATCH",
+      "INVALID_CITATION",
+      "MISSING_EVIDENCE",
+      "UNVERIFIABLE",
+      "MODEL_OR_TOOL_FAILURE",
+      "NOT_APPLICABLE"
+    ],
+    "correction": {
+      "maximum_attempts": 1,
+      "uses_same_readonly_agent_loop": true,
+      "remaining_budget_from_agent_current_step": true,
+      "uses_original_deadline": true,
+      "only_existing_readonly_tools": true
+    },
+    "followup_new_files": [
+      "scripts/m1_5_http_support.py",
+      "scripts/verify_m1_5_local_acceptance.ps1",
+      "tests/devflow_agent/test_m1_5_acceptance_http.py",
+      "scripts/recheck_m15_saved_answer.py"
+    ],
+    "business_code_changed_this_followup": true,
+    "offline_recheck": {
+      "script": "scripts/recheck_m15_saved_answer.py",
+      "status": "PASS",
+      "run_id": "20261023T102601Z-m15-python-health",
+      "original_ask_exit_code": 3,
+      "model_restarted": false,
+      "citation_status": "PASS",
+      "numeric_status": "PASS",
+      "numeric_claims_checked": 1,
+      "verified_expression": "sum([-100, 50, -200])",
+      "verified_result": -250,
+      "raw_evidence_unchanged": true,
+      "evidence_file": "reports/m1_5_real_model_runs/20261023T102601Z-m15-python-health/offline-quality-recheck.json"
+    }
+  },
+  "eval_set": {
+    "path": "evals/m1_5_answer_quality.jsonl",
+    "case_count": 10,
+    "cases": [
+      "ordinary source search/read",
+      "correct negative sum",
+      "wrong negative sum",
+      "wrong citation line",
+      "stale file evidence",
+      "invalid tool parameters",
+      "path traversal",
+      "incomplete model output",
+      "valid evidence but unverifiable claim",
+      "recovery budget exhausted"
+    ],
+    "all_expected_statuses_matched": true,
+    "is_real_model_evaluation": false
+  },
+  "tests": {
+    "focused": {
+      "command": ".venv/Scripts/python.exe -m unittest tests.devflow_agent.test_answer_quality -v",
+      "run": 16,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "full_regression": {
+      "command": ".venv/Scripts/python.exe -m unittest discover -s tests/devflow_agent -v (isolated copy, local private config omitted)",
+      "run": 58,
+      "passed": 57,
+      "failed": 0,
+      "skipped": 1,
+      "exit_code": 0,
+      "log": "reports/packaging/M1_5_FULL_REGRESSION_FINAL_2026-10-23.log",
+      "skip_reason": "Windows host denied creation of a directory junction",
+      "rerun_this_followup": false
+    },
+    "compile": {
+      "files": 4,
+      "status": "PASS",
+      "exit_code": 0
+    },
+    "cli_help": {
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "reports/packaging/M1_5_CLI_HELP_2026-10-23.log"
+    },
+    "synthetic_repo_modified": false,
+    "task_b": "NOT_RUN",
+    "acceptance_script_and_quality_regression": {
+      "run": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "new_script_tests": 5,
+      "existing_quality_tests": 16
+    },
+    "followup_compile": {
+      "files": 2,
+      "exit_code": 0,
+      "powershell_syntax": "PASS"
+    }
+  },
+  "real_model_gate": {
+    "status": "FAIL",
+    "run_id": "20261023T102601Z-m15-python-health",
+    "model": "Qwen3.5-4B Q4_K_M",
+    "model_path": "<model-root>\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf",
+    "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+    "runtime_path": "<model-root>\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe",
+    "runtime_sha256": "f8df891a5e4d10fa8cfc0f86c8d99617a06edd18d046e18b59ec3354f17fc12d",
+    "runtime_version": {
+      "argv": [
+        "<model-root>\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe",
+        "--version"
+      ],
+      "started_at_utc": "2026-10-23T18:26:05.43595+08:00",
+      "timeout_seconds": 10,
+      "exit_code": 0,
+      "status": "PASS",
+      "stdout": "",
+      "stderr": "version: 0.5.0-dev (build 11424, commit 6c59c4007)\nbuilt with Clang 20.1.8 for Windows x86_64\n",
+      "elapsed_seconds": 0.047
+    },
+    "python_path": "<repo-root>\\.venv\\Scripts\\python.exe",
+    "python_version": "Python 3.12.7",
+    "endpoint": "http://127.0.0.1:11434/v1",
+    "context_tokens": 3072,
+    "max_output_tokens": 1024,
+    "max_steps": 6,
+    "run_timeout_seconds": 180,
+    "request_timeout_seconds": 120,
+    "config_preserved": true,
+    "config_sha256": "40B887F9ADAC2AA5DDB980CE58361D267C064664472336E1ED3C409D68ACB658",
+    "stages": {
+      "preflight": "PASS",
+      "runtime_version": "PASS",
+      "process_start": "PASS",
+      "model_load": "PASS_BY_HEALTH_AND_COMPLETION",
+      "health": "PASS",
+      "models_identity": "PASS",
+      "ask_execution": "COMPLETED_EXIT_3",
+      "answer_quality": "FAIL",
+      "cleanup": "PASS"
+    },
+    "health_http_status": 200,
+    "health_attempts": 4,
+    "health_elapsed_seconds": 3.063,
+    "models_http_status": 200,
+    "actual_listeners": [
+      {
+        "LocalAddress": "127.0.0.1",
+        "LocalPort": 11434,
+        "OwningProcess": 65408
+      }
+    ],
+    "ask_exit_code": 3,
+    "ask_elapsed_seconds": 98.002,
+    "agent_elapsed_seconds": 95.281,
+    "real_ask_invocations": 1,
+    "model_calls": 3,
+    "http_model_requests": 3,
+    "requests": [
+      {
+        "id": 1,
+        "seconds": 23.437,
+        "http": 200,
+        "finish_reason": "tool_calls",
+        "usage": {
+          "completion_tokens": 119,
+          "prompt_tokens": 887,
+          "total_tokens": 1006,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "id": 2,
+        "seconds": 14.516,
+        "http": 200,
+        "finish_reason": "tool_calls",
+        "usage": {
+          "completion_tokens": 96,
+          "prompt_tokens": 1269,
+          "total_tokens": 1365,
+          "prompt_tokens_details": {
+            "cached_tokens": 883
+          }
+        }
+      },
+      {
+        "id": 3,
+        "seconds": 57.172,
+        "http": 200,
+        "finish_reason": "stop",
+        "usage": {
+          "completion_tokens": 509,
+          "prompt_tokens": 1646,
+          "total_tokens": 2155,
+          "prompt_tokens_details": {
+            "cached_tokens": 1265
+          }
+        }
+      }
+    ],
+    "tool_sequence": [
+      "repository_search_readonly",
+      "repository_readonly_read"
+    ],
+    "native_call_pairs": [
+      {
+        "call_id": "CBrzzAORYACYqmeEWJiLEgGfEAixxw54",
+        "tool": "repository_search_readonly",
+        "response_request_id": 1,
+        "next_request_id": 2,
+        "matching_results": 1,
+        "result_equals_cli_trace": true
+      },
+      {
+        "call_id": "JD36mNA573W98J4wulGQJhixmokS7NvL",
+        "tool": "repository_readonly_read",
+        "response_request_id": 2,
+        "next_request_id": 3,
+        "matching_results": 1,
+        "result_equals_cli_trace": true
+      }
+    ],
+    "read_evidence_count": 1,
+    "read_result_in_next_request": true,
+    "trace_issues": [],
+    "final_answer": "The helper that totals signed amounts is located at **`src/totals.py`** (lines 1-3).\n\n## How Positive and Negative Values Are Combined\n\nThe helper function `total()` simply delegates to Python's built-in `sum()` function, which performs standard arithmetic addition:\n\n- **Positive values** are treated as positive numbers and added to the running total\n- **Negative values** are treated as negative numbers (subtractions) and added to the running total\n- The result is the arithmetic sum of all values, respecting their signs\n\n## Computing `sum([-100, 50, -200])`\n\n**Expression:** `sum([-100, 50, -200])`\n\n**Calculation Steps:**\n\n| Step | Operation | Running Total |\n|------|-----------|---------------|\n| Start | Initial value | 0 |\n| 1 | 0 + (-100) | -100 |\n| 2 | -100 + 50 | -50 |\n| 3 | -50 + (-200) | **-250** |\n\n**Result:** `-250`\n\n**Citation:** `src/totals.py` lines 1-3",
+    "citation_gate": {
+      "citations": [],
+      "errors": [
+        "missing_path_line_citation"
+      ],
+      "valid": false
+    },
+    "numeric_raw_gate": {
+      "claims": [],
+      "claims_checked": 0,
+      "errors": [],
+      "scope": "Only explicit bounded arithmetic expressions and literal-list sum calls are evaluated.",
+      "status": "PASS"
+    },
+    "numeric_acceptance": "UNVERIFIABLE",
+    "numeric_acceptance_reason": "Zero extracted claims; this is not evidence of a verified computation, even though independent review confirms the displayed result is -250.",
+    "independently_checked_result": -250,
+    "quality_status": "MISSING_EVIDENCE",
+    "correction_attempts": 0,
+    "fixture_unchanged": true,
+    "fixture_sha256": [
+      {
+        "path": "README.md",
+        "sha256": "30bd13742ca3e915032750caae632b7ae8b9156cb9842845839925525af8b10c",
+        "bytes": 66
+      },
+      {
+        "path": "src/totals.py",
+        "sha256": "2195deb70718b9bd198ac5caa3bc2f0c3816cd10b0f9e538eda0de7487267ea5",
+        "bytes": 123
+      }
+    ],
+    "cleanup": {
+      "server_pid": 65408,
+      "ask_pid": 71920,
+      "owned_processes_before_cleanup": [
+        {
+          "pid": 65408,
+          "parent_pid": 69600,
+          "path": "<model-root>\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe",
+          "created": "10/23/2026 18:26:08"
+        },
+        {
+          "pid": 43004,
+          "parent_pid": 65408,
+          "path": "C:\\WINDOWS\\system32\\conhost.exe",
+          "created": "10/23/2026 18:26:08"
+        }
+      ],
+      "server_terminated_by_this_run": true,
+      "server_exit_code": -1,
+      "ask_terminated_by_this_run": false,
+      "ask_exit_code": 3,
+      "shutdown_elapsed_seconds": 0.628,
+      "remaining_owned_processes": [],
+      "listener_after_cleanup": false,
+      "residual_server": false
+    },
+    "diagnosis": "ANSWER_VALIDATOR_FORMAT_COVERAGE_GAP",
+    "original_model_evidence_unchanged": true,
+    "no_second_real_attempt": true,
+    "evidence_path": "reports/m1_5_real_model_runs/20261023T102601Z-m15-python-health",
+    "script_sha256": "B4DDE88192DB18285D782C458F3C6FA1BC8F9A2E3CFF7B85B777F83D7BE80F95",
+    "helper_sha256": "6A03D7A0C335782D9587C070506734472C7CD17AFA06400C22080DB772B5237D"
+  },
+  "next_stage": {
+    "milestone": "M2 CI failure diagnosis",
+    "status": "PLANNED_NOT_IMPLEMENTED",
+    "next_minimal_scope": "Read-only pytest log and exit-code parser, fixed evaluation set, source evidence links, bounded stop conditions",
+    "no_model_or_write_tools": true,
+    "prerequisite": "Close M1.5 answer-format and mandatory arithmetic-coverage gaps using the saved real answer as an offline regression; M2 remains planned, not implemented."
+  },
+  "security": {
+    "readonly_tools_only": [
+      "repository_search_readonly",
+      "repository_readonly_read"
+    ],
+    "bash_registered": false,
+    "python_execute_registered": false,
+    "file_write_tools_registered": false,
+    "personal_write": "DISABLED",
+    "owner_confirmation": "DEFAULT_OFF",
+    "task_b": "NOT_RUN",
+    "commit_or_push": "NOT_PERFORMED"
+  },
+  "historical_real_model_preparations": {
+    "status": "BLOCKED",
+    "attempt_run_ids": [
+      "20261023T100921Z-m15-qwen35-4b",
+      "20261023T101326Z-m15-qwen35-4b-final"
+    ],
+    "model": "Qwen3.5-4B Q4_K_M",
+    "model_sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4",
+    "runtime": "llama.cpp b11424 CPU",
+    "runtime_path": "D:agentmodelsqwen3.5-4b.runtimellama-b11424llama-server.exe",
+    "runtime_sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D",
+    "runtime_version": "0.5.0-dev build 11424 commit 6c59c4007 (historical record matched current binary SHA)",
+    "model_alias": "devflow-qwen35-4b",
+    "endpoint": "http://127.0.0.1:11434/v1",
+    "context_tokens": 3072,
+    "max_output_tokens": 1024,
+    "server_process_created": true,
+    "model_load_confirmed": false,
+    "health": "NOT_RUN",
+    "models_endpoint": "NOT_RUN",
+    "ask": "NOT_RUN",
+    "model_calls": 0,
+    "fixture_created_on_second_attempt": true,
+    "fixture_hash_check": "PASS_UNCHANGED_BEFORE_AND_AFTER_STARTUP_ATTEMPT",
+    "first_attempt": {
+      "server_started": false,
+      "error_type": "RemoteException",
+      "reason": "PowerShell treated native llama-server --version output as terminating under ErrorActionPreference=Stop",
+      "script_sha256": "46691AB40666A8CEC8DA563187A28DDC63AB3563AF13B8CF7F23D5603F91828C"
+    },
+    "second_attempt": {
+      "server_pid": 58312,
+      "stderr_evidence": "llama_server initializing; loading model GGUF; load completion not observed",
+      "resource_preflight": {
+        "free_ram_gb": 5.29,
+        "model_file_gb": 2.55,
+        "minimum_threshold_gb": 4.05,
+        "passed": true
+      },
+      "error_type": "RuntimeException",
+      "reason": "Unable to find type System.Net.Http.HttpClientHandler before first health request",
+      "script_path": "reports/m1_5_real_model_runs/20261023T101326Z-m15-qwen35-4b-final/m1_5_real_acceptance.ps1",
+      "script_sha256": "E502C9ADC9270681071FA76A705A507FC5C720312ED8283FE7E5752FAA926FCE",
+      "cleanup": {
+        "elapsed_seconds": 0.394,
+        "owned_server_pid": 58312,
+        "owned_console_descendant_pid": 63100,
+        "remaining_owned_processes": 0,
+        "listener_after_cleanup": false
+      }
+    },
+    "no_further_attempts": true,
+    "conclusion": "Preparation script failures; no health check, model completion or inference. Cannot infer model capability or endpoint health."
+  },
+  "known_limitations": [
+    "The real answer is correct on this synthetic example, but current citation and arithmetic extraction do not cover its Markdown presentation; full answer gate did not pass.",
+    "Real numeric correction was not exercised (zero attempts). Source audit also sees llm.client.close() before the optional correction branch; its live-client lifecycle needs a focused regression before claiming real correction support.",
+    "No general natural-language entailment verification, code edits, Task B, independent reviewer or new full-regression run in this follow-up."
+  ]
+}

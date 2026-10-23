@@ -106,7 +106,10 @@ class SandboxSettings(BaseModel):
 
 
 class DaytonaSettings(BaseModel):
-    daytona_api_key: str
+    # Daytona is optional; an omitted section must not block importing the
+    # local Agent/runtime. The Daytona client will still require a real key
+    # when that backend is explicitly selected.
+    daytona_api_key: str = ""
     daytona_server_url: Optional[str] = Field(
         "https://app.daytona.io/api", description=""
     )
